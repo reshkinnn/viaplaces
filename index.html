@@ -22,6 +22,8 @@
   --on-accent: #FFFFFF;
   --lilac: #E6E1F5;
   --lilac-ink: #483B7D;
+  --ph0-a: #F3D9E2; --ph0-b: #E9BFD0; --ph1-a: #E3DDF4; --ph1-b: #CFC6EA;
+  --ph2-a: #D9E4F0; --ph2-b: #BFD2E6; --ph3-a: #DCE9E1; --ph3-b: #C3D9CC;
   --display: "Oranienbaum", "Times New Roman", serif;
   --body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -29,12 +31,16 @@
   :root:not([data-theme="light"]) {
     --bg: #11141C; --surface: #181C27; --surface-2: #212636; --ink: #EDEFF5; --muted: #98A0B3;
     --line: #2A3042; --accent: #F08BA8; --on-accent: #1A0F14; --lilac: #2B2745; --lilac-ink: #CFC9F2;
+    --ph0-a: #3A2330; --ph0-b: #2B1A25; --ph1-a: #2B2745; --ph1-b: #211E36;
+    --ph2-a: #1F2C3D; --ph2-b: #18222F; --ph3-a: #1F3029; --ph3-b: #18241F;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #11141C; --surface: #181C27; --surface-2: #212636; --ink: #EDEFF5; --muted: #98A0B3;
   --line: #2A3042; --accent: #F08BA8; --on-accent: #1A0F14; --lilac: #2B2745; --lilac-ink: #CFC9F2;
+    --ph0-a: #3A2330; --ph0-b: #2B1A25; --ph1-a: #2B2745; --ph1-b: #211E36;
+    --ph2-a: #1F2C3D; --ph2-b: #18222F; --ph3-a: #1F3029; --ph3-b: #18241F;
   color-scheme: dark;
 }
 
@@ -45,6 +51,7 @@ body {
   font-family: var(--body);
   font-size: 15px;
   line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
   padding-block: 20px 40px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -59,8 +66,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .lead { color: var(--muted); font-size: 14px; margin-top: 2px; }
 
 /* вкладки */
-.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 14px; }
-.tab { border: 0; background: transparent; padding: 9px 4px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); min-width: 0; }
+.tabs { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.1fr) minmax(0, 1.45fr); gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 14px; }
+.tab { border: 0; background: transparent; padding: 9px 4px; border-radius: 10px; font-size: 14px; line-height: 1.2; font-weight: 500; color: var(--muted); min-width: 0; }
 .tab[aria-selected="true"] { background: var(--surface); color: var(--ink); }
 .badge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--accent); color: var(--on-accent); font-size: 11px; line-height: 18px; }
 
@@ -74,7 +81,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .btn-quiet:hover { background: var(--surface-2); }
 .st-panel { display: grid; gap: 8px; }
 .st-panel input, .form input, .form select, .form textarea {
-  width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+  width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--bg);
   border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px;
 }
 .st-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 280px; overflow-y: auto; }
@@ -90,25 +97,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* группы и карточки */
 .groups { display: grid; gap: 22px; }
 .group { display: grid; gap: 10px; }
-.group h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
-.group h2 span { font-variant-numeric: tabular-nums; font-weight: 500; }
-.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.card { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
-.time { text-align: center; padding-top: 2px; }
-.time b { display: block; font-family: var(--display); font-weight: 400; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
-.time span { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.group h2 { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.2; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; }
+.group h2 .cnt { font-family: var(--body); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .card h3 { font-size: 16px; font-weight: 600; line-height: 1.25; }
 .desc { color: var(--muted); font-size: 14px; margin-top: 3px; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 10px; }
 .tag { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--lilac); color: var(--lilac-ink); }
-.maplink { font-size: 13px; font-weight: 500; color: var(--accent); text-decoration: none; margin-left: auto; }
+.maplink { font-size: 13px; font-weight: 500; color: var(--accent); text-decoration: none; }
 .maplink:hover { text-decoration: underline; }
-.heart { width: 42px; height: 42px; display: grid; place-items: center; border: 0; background: transparent; border-radius: 50%; color: var(--muted); }
-.heart:hover { background: var(--surface-2); }
-.heart[aria-pressed="true"] { color: var(--accent); }
-.heart svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
-.heart[aria-pressed="true"] svg { fill: currentColor; }
-.actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
 .btn-small { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 500; }
 .btn-small:hover { background: var(--surface-2); }
 .btn-main { border: 0; background: var(--accent); color: var(--on-accent); border-radius: 12px; padding: 12px 18px; font-weight: 600; }
@@ -129,6 +126,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .prop .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .h-sub { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; display: grid; }
+.media { position: relative; aspect-ratio: 16 / 10; overflow: hidden; display: grid; place-items: center; background: linear-gradient(135deg, var(--pa), var(--pb)); }
+.media.p0 { --pa: var(--ph0-a); --pb: var(--ph0-b); }
+.media.p1 { --pa: var(--ph1-a); --pb: var(--ph1-b); }
+.media.p2 { --pa: var(--ph2-a); --pb: var(--ph2-b); }
+.media.p3 { --pa: var(--ph3-a); --pb: var(--ph3-b); }
+.ph-letter { font-family: var(--display); font-size: 72px; line-height: 1; color: var(--ink); opacity: .16; user-select: none; }
+.media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.time-pill { position: absolute; left: 10px; bottom: 10px; background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.time-pill span { font-weight: 500; color: var(--muted); }
+.heart { position: absolute; right: 8px; top: 8px; width: 42px; height: 42px; display: grid; place-items: center; border: 0; background: var(--surface); border-radius: 50%; color: var(--muted); }
+.heart[aria-pressed="true"] { color: var(--accent); }
+.heart svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.heart[aria-pressed="true"] svg { fill: currentColor; }
+.body { padding: 14px; min-width: 0; }
+.links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 10px; }
+.links .link-btn { margin-left: auto; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .addr { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
 .tag-note { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
 .link-btn { border: 0; background: transparent; padding: 0; font-size: 13px; color: var(--muted); text-decoration: underline; }
@@ -149,7 +164,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   <div class="tabs" role="tablist" aria-label="Разделы">
     <button class="tab" role="tab" id="tab-near" data-act="tab" data-tab="near" aria-selected="true" aria-controls="view-near">Рядом</button>
     <button class="tab" role="tab" id="tab-saved" data-act="tab" data-tab="saved" aria-selected="false" aria-controls="view-saved">Сохранённое<span class="badge" id="savedBadge" hidden>0</span></button>
-    <button class="tab" role="tab" id="tab-add" data-act="tab" data-tab="add" aria-selected="false" aria-controls="view-add">Добавить</button>
+    <button class="tab" role="tab" id="tab-add" data-act="tab" data-tab="add" aria-selected="false" aria-controls="view-add">Предложить место</button>
   </div>
 
   <!-- РЯДОМ -->
@@ -217,8 +232,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 <script>
 (function () {
   var LINE = { 1: '#D6083B', 2: '#0078C9', 3: '#009A49', 4: '#EA7125', 5: '#702785' };
-  var MOODS = [['all', 'Всё подряд'], ['walk', 'Погулять'], ['sit', 'Посидеть'], ['photo', 'Пофоткаться'], ['warm', 'Погреться']];
-  var MOOD_LABEL = { walk: 'Погулять', sit: 'Посидеть', photo: 'Пофоткаться', warm: 'Погреться' };
+  var MOODS = [['sit', 'Поесть'], ['walk', 'Погулять'], ['photo', 'Пофоткаться'], ['warm', 'Погреться'], ['all', 'Всё подряд']];
+  var MOOD_LABEL = { walk: 'Погулять', sit: 'Поесть', photo: 'Пофоткаться', warm: 'Погреться' };
 
   var STATIONS = [
     {"id": "gd", "name": "Гостиный двор · Невский пр.", "line": 3, "lat": 59.9348, "lon": 30.3304},
@@ -329,7 +344,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   var state = {
     tab: 'near',
     station: load('station', 'gd'),
-    mood: load('mood', 'all'),
+    mood: load('mood', 'sit'),
     favs: load('favs', {}),
     reports: load('reports', {}),
     props: load('props', []),
@@ -337,7 +352,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     q: ''
   };
   if (!byStation(state.station)) state.station = 'gd';
-  if (!MOODS.some(function (m) { return m[0] === state.mood; })) state.mood = 'all';
+  if (!MOODS.some(function (m) { return m[0] === state.mood; })) state.mood = 'sit';
 
   function byStation(id) { return STATIONS.filter(function (s) { return s.id === id; })[0]; }
   function byPlace(id) { return PLACES.filter(function (p) { return p.id === id; })[0]; }
@@ -357,25 +372,31 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
   function tagsHTML(p) { return (p.note ? '<span class="tag tag-note">' + esc(p.note) + '</span>' : '') + p.moods.map(function (m) { return '<span class="tag">' + MOOD_LABEL[m] + '</span>'; }).join(''); }
 
+  function hue(id) { var h = 0; for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return h % 4; }
   function cardHTML(p, m, mode) {
     var shown = m > 99 ? '99+' : m;
     var rep = !!state.reports[p.id];
-    var html = '<li class="card' + (rep ? ' reported' : '') + '"><div class="time"><b>' + shown + '</b><span>мин</span></div><div style="min-width:0"><h3>' + esc(p.name) + '</h3>' +
-      (p.addr ? '<p class="addr">' + esc(p.addr) + '</p>' : '') +
-      '<p class="desc">' + esc(p.desc) + '</p><div class="meta">' + tagsHTML(p) +
-      '<a class="maplink" href="' + mapUrl(p) + '" target="_blank" rel="noopener">На карте ↗</a>' +
-      '<button class="link-btn" data-act="report" data-id="' + p.id + '">' + (rep ? 'Отменить отметку' : (p.door ? 'Дверь изменилась?' : 'Закрылось?')) + '</button></div>' +
-      (rep ? '<p class="note" style="margin-top:6px">Отметили, проверим это место.</p>' : '') + '</div>';
+    var on = !!state.favs[p.id];
+    var html = '<li class="card' + (rep ? ' reported' : '') + '"><div class="media p' + hue(p.id) + '">' +
+      '<span class="ph-letter" aria-hidden="true">' + esc(p.name.charAt(0)) + '</span>' +
+      '<img src="photos/' + encodeURIComponent(p.id) + '.jpg" alt="" loading="lazy" decoding="async">' +
+      '<span class="time-pill">' + shown + ' <span>мин пешком</span></span>';
     if (mode === 'near') {
-      var on = !!state.favs[p.id];
       html += '<button class="heart" data-act="fav" data-id="' + p.id + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Убрать из сохранённого: ' : 'Сохранить: ') + esc(p.name) + '">' + HEART + '</button>';
-    } else {
+    }
+    html += '</div><div class="body"><h3>' + esc(p.name) + '</h3>' +
+      (p.addr ? '<p class="addr">' + esc(p.addr) + '</p>' : '') +
+      '<p class="desc">' + esc(p.desc) + '</p><div class="meta">' + tagsHTML(p) + '</div>' +
+      '<div class="links"><a class="maplink" href="' + mapUrl(p) + '" target="_blank" rel="noopener">На карте ↗</a>' +
+      '<button class="link-btn" data-act="report" data-id="' + p.id + '">' + (rep ? 'Отменить отметку' : (p.door ? 'Дверь изменилась?' : 'Закрылось?')) + '</button></div>' +
+      (rep ? '<p class="note" style="margin-top:6px">Отметили, проверим это место.</p>' : '');
+    if (mode !== 'near') {
       var st = state.favs[p.id];
-      html += '<span></span><div class="actions">' +
+      html += '<div class="actions">' +
         (st === 'want' ? '<button class="btn-small" data-act="status" data-id="' + p.id + '" data-status="been">Были здесь</button>' : '<button class="btn-small" data-act="status" data-id="' + p.id + '" data-status="want">Хочу снова</button>') +
         '<button class="btn-small" data-act="unfav" data-id="' + p.id + '">Убрать</button></div>';
     }
-    return html + '</li>';
+    return html + '</div></li>';
   }
 
   function renderStation() {
@@ -402,15 +423,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
       .map(function (p) { return { p: p, m: mins(st, p) }; })
       .filter(function (x) { return x.m <= 35; })
       .sort(function (a, b) { return a.m - b.m; });
+    function plural(n, a, b, c) {
+      var m = n % 10, h = n % 100;
+      return n + ' ' + (m === 1 && h !== 11 ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c));
+    }
     var groups = [
       ['До 10 минут пешком', function (x) { return x.m <= 10; }],
-      ['10–20 минут', function (x) { return x.m > 10 && x.m <= 20; }],
-      ['20–35 минут', function (x) { return x.m > 20; }]
+      ['Более 10 минут пешком', function (x) { return x.m > 10; }]
     ];
     var html = groups.map(function (g) {
       var part = items.filter(g[1]);
       if (!part.length) return '';
-      return '<section class="group"><h2>' + g[0] + ' <span>' + part.length + '</span></h2><ul class="cards">' + part.map(function (x) { return cardHTML(x.p, x.m, 'near'); }).join('') + '</ul></section>';
+      return '<section class="group"><h2><span>' + g[0] + '</span><span class="cnt">' + plural(part.length, 'вариант', 'варианта', 'вариантов') + '</span></h2><ul class="cards">' + part.map(function (x) { return cardHTML(x.p, x.m, 'near'); }).join('') + '</ul></section>';
     }).join('');
     if (!items.length) {
       var alt = STATIONS.filter(function (s) { return s.id !== st.id; }).map(function (s) {
@@ -507,6 +531,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
     $('propStatus').textContent = 'Заявка сохранена на этом устройстве.';
     renderProps();
   });
+
+  document.addEventListener('error', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('.media')) t.remove();
+  }, true);
 
   renderAll();
 })();
