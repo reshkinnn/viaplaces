@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Куда дальше</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Oranienbaum&display=swap" rel="stylesheet">
+<style>
+/* Layout: одна колонка до 600px. Сверху станция, под ней настроение, ниже места по времени пешком.
+   Палитра: питерский туман, гранит и пыльная роза фасадов. */
+:root {
+  --bg: #EDF0F5;
+  --surface: #FBFCFE;
+  --surface-2: #E2E7EF;
+  --ink: #1C2233;
+  --muted: #5E6779;
+  --line: #D5DBE6;
+  --accent: #BE3A63;
+  --on-accent: #FFFFFF;
+  --lilac: #E6E1F5;
+  --lilac-ink: #483B7D;
+  --display: "Oranienbaum", "Times New Roman", serif;
+  --body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141C; --surface: #181C27; --surface-2: #212636; --ink: #EDEFF5; --muted: #98A0B3;
+    --line: #2A3042; --accent: #F08BA8; --on-accent: #1A0F14; --lilac: #2B2745; --lilac-ink: #CFC9F2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141C; --surface: #181C27; --surface-2: #212636; --ink: #EDEFF5; --muted: #98A0B3;
+  --line: #2A3042; --accent: #F08BA8; --on-accent: #1A0F14; --lilac: #2B2745; --lilac-ink: #CFC9F2;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.45;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.app { max-width: 600px; margin: 0 auto; display: grid; gap: 16px; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.brand { font-family: var(--display); font-size: 22px; letter-spacing: .01em; }
+.lead { color: var(--muted); font-size: 14px; margin-top: 2px; }
+
+/* вкладки */
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 14px; }
+.tab { border: 0; background: transparent; padding: 9px 4px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); min-width: 0; }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); }
+.badge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--accent); color: var(--on-accent); font-size: 11px; line-height: 18px; }
+
+/* станция */
+.station { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+.station-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.st-name { font-family: var(--display); font-weight: 400; font-size: 32px; line-height: 1.1; display: flex; align-items: center; gap: 10px; margin-top: 4px; text-wrap: balance; }
+.dot { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--c, var(--muted)); }
+.btn-quiet { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 500; flex: none; }
+.btn-quiet:hover { background: var(--surface-2); }
+.st-panel { display: grid; gap: 8px; }
+.st-panel input, .form input, .form select, .form textarea {
+  width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px;
+}
+.st-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 280px; overflow-y: auto; }
+.st-item { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; border: 0; background: transparent; padding: 10px 8px; border-radius: 10px; }
+.st-item:hover, .st-item[aria-current="true"] { background: var(--surface-2); }
+.st-item .count { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* настроение */
+.moods { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; font-size: 14px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+/* группы и карточки */
+.groups { display: grid; gap: 22px; }
+.group { display: grid; gap: 10px; }
+.group h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
+.group h2 span { font-variant-numeric: tabular-nums; font-weight: 500; }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.card { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.time { text-align: center; padding-top: 2px; }
+.time b { display: block; font-family: var(--display); font-weight: 400; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
+.time span { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.card h3 { font-size: 16px; font-weight: 600; line-height: 1.25; }
+.desc { color: var(--muted); font-size: 14px; margin-top: 3px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 10px; }
+.tag { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--lilac); color: var(--lilac-ink); }
+.maplink { font-size: 13px; font-weight: 500; color: var(--accent); text-decoration: none; margin-left: auto; }
+.maplink:hover { text-decoration: underline; }
+.heart { width: 42px; height: 42px; display: grid; place-items: center; border: 0; background: transparent; border-radius: 50%; color: var(--muted); }
+.heart:hover { background: var(--surface-2); }
+.heart[aria-pressed="true"] { color: var(--accent); }
+.heart svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.heart[aria-pressed="true"] svg { fill: currentColor; }
+.actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-small { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 500; }
+.btn-small:hover { background: var(--surface-2); }
+.btn-main { border: 0; background: var(--accent); color: var(--on-accent); border-radius: 12px; padding: 12px 18px; font-weight: 600; }
+
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 10px; }
+.empty p { color: var(--muted); }
+.empty .row { display: flex; flex-wrap: wrap; gap: 8px; }
+.note { font-size: 12.5px; color: var(--muted); }
+
+.seg { display: flex; gap: 8px; }
+.form { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 14px; }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 13px; font-weight: 600; }
+.form textarea { min-height: 84px; resize: vertical; }
+.status { font-size: 14px; color: var(--accent); min-height: 1.4em; }
+.props { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.prop { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 4px; }
+.prop .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.h-sub { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+.addr { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.tag-note { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.link-btn { border: 0; background: transparent; padding: 0; font-size: 13px; color: var(--muted); text-decoration: underline; }
+.link-btn:hover { color: var(--ink); }
+.card.reported { opacity: .6; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header>
+    <p class="brand">Куда дальше</p>
+    <p class="lead">Выберите станцию метро и посмотрите, куда пойти после встречи.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Разделы">
+    <button class="tab" role="tab" id="tab-near" data-act="tab" data-tab="near" aria-selected="true" aria-controls="view-near">Рядом</button>
+    <button class="tab" role="tab" id="tab-saved" data-act="tab" data-tab="saved" aria-selected="false" aria-controls="view-saved">Сохранённое<span class="badge" id="savedBadge" hidden>0</span></button>
+    <button class="tab" role="tab" id="tab-add" data-act="tab" data-tab="add" aria-selected="false" aria-controls="view-add">Добавить</button>
+  </div>
+
+  <!-- РЯДОМ -->
+  <section id="view-near" role="tabpanel" aria-labelledby="tab-near" class="app" style="gap:16px">
+    <div class="station">
+      <div class="station-top">
+        <div>
+          <p class="eyebrow">Вы у метро</p>
+          <h1 class="st-name"><span class="dot" id="stDot"></span><span id="stName"></span></h1>
+        </div>
+        <button class="btn-quiet" id="stToggle" data-act="stToggle" aria-expanded="false" aria-controls="stPanel">Сменить</button>
+      </div>
+      <div class="st-panel" id="stPanel" hidden>
+        <label class="sr" for="stQ">Найти станцию</label>
+        <input id="stQ" type="search" placeholder="Найти станцию" autocomplete="off">
+        <ul class="st-list" id="stList"></ul>
+      </div>
+    </div>
+
+    <div class="moods" id="moods" role="group" aria-label="Настроение"></div>
+    <div class="groups" id="groups" aria-live="polite"></div>
+    <p class="note">Время пешком примерное, посчитано по прямой с запасом на повороты улиц. Адреса найдены автоматически, перед запуском их нужно проверить.</p>
+    <p class="note">Парадные находятся в жилых домах. Снимайте тихо, а если вход закрыт на домофон, оставайтесь снаружи.</p>
+  </section>
+
+  <!-- СОХРАНЁННОЕ -->
+  <section id="view-saved" role="tabpanel" aria-labelledby="tab-saved" class="app" style="gap:16px" hidden>
+    <div class="seg" id="savedSeg" role="group" aria-label="Список"></div>
+    <div id="savedList"></div>
+    <p class="note" id="savedNote"></p>
+  </section>
+
+  <!-- ДОБАВИТЬ -->
+  <section id="view-add" role="tabpanel" aria-labelledby="tab-add" class="app" style="gap:16px" hidden>
+    <form class="form" id="propForm" novalidate>
+      <div class="field">
+        <label for="p-kind">Что это</label>
+        <select id="p-kind" name="kind">
+          <option value="Кафе или ресторан">Кафе или ресторан</option>
+          <option value="Красивая дверь или парадная">Красивая дверь или парадная</option>
+          <option value="Место для прогулки">Место для прогулки</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="p-name">Название или адрес</label>
+        <input id="p-name" name="name" type="text" placeholder="Например, двор на Грибоедова" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="p-station">Ближайшая станция</label>
+        <select id="p-station" name="station"></select>
+      </div>
+      <div class="field">
+        <label for="p-why">Чем красиво</label>
+        <textarea id="p-why" name="why" placeholder="Пара фраз: что там есть и когда лучше прийти"></textarea>
+      </div>
+      <button class="btn-main" type="submit">Предложить место</button>
+      <p class="status" id="propStatus" role="status"></p>
+      <p class="note">В этой версии заявки хранятся только на вашем устройстве и никуда не отправляются. В сервисе они попадут в очередь проверки.</p>
+    </form>
+    <p class="h-sub" id="propsHead" hidden>Ваши заявки</p>
+    <ul class="props" id="propsList"></ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  var LINE = { 1: '#D6083B', 2: '#0078C9', 3: '#009A49', 4: '#EA7125', 5: '#702785' };
+  var MOODS = [['all', 'Всё подряд'], ['walk', 'Погулять'], ['sit', 'Посидеть'], ['photo', 'Пофоткаться'], ['warm', 'Погреться']];
+  var MOOD_LABEL = { walk: 'Погулять', sit: 'Посидеть', photo: 'Пофоткаться', warm: 'Погреться' };
+
+  var STATIONS = [
+    {"id": "gd", "name": "Гостиный двор · Невский пр.", "line": 3, "lat": 59.9348, "lon": 30.3304},
+    {"id": "adm", "name": "Адмиралтейская", "line": 5, "lat": 59.9358, "lon": 30.315},
+    {"id": "maya", "name": "Маяковская · пл. Восстания", "line": 3, "lat": 59.9314, "lon": 30.3574},
+    {"id": "chern", "name": "Чернышевская", "line": 1, "lat": 59.9447, "lon": 30.3597},
+    {"id": "lenina", "name": "Площадь Ленина", "line": 1, "lat": 59.9558, "lon": 30.3556},
+    {"id": "gork", "name": "Горьковская", "line": 2, "lat": 59.9561, "lon": 30.3188},
+    {"id": "petr", "name": "Петроградская", "line": 2, "lat": 59.9667, "lon": 30.3118},
+    {"id": "chkal", "name": "Чкаловская", "line": 5, "lat": 59.961, "lon": 30.2922},
+    {"id": "sport", "name": "Спортивная", "line": 5, "lat": 59.952, "lon": 30.2917},
+    {"id": "senn", "name": "Сенная площадь · Садовая", "line": 2, "lat": 59.927, "lon": 30.3196},
+    {"id": "vlad", "name": "Владимирская · Достоевская", "line": 1, "lat": 59.9277, "lon": 30.3468},
+    {"id": "push", "name": "Пушкинская", "line": 1, "lat": 59.9208, "lon": 30.3295},
+    {"id": "zven", "name": "Звенигородская", "line": 5, "lat": 59.922, "lon": 30.3356},
+    {"id": "vas", "name": "Василеостровская", "line": 3, "lat": 59.9422, "lon": 30.2786},
+    {"id": "lig", "name": "Лиговский проспект", "line": 4, "lat": 59.9208, "lon": 30.3555},
+    {"id": "alnev", "name": "Пл. Александра Невского", "line": 3, "lat": 59.9242, "lon": 30.3844}
+  ];
+
+  var PLACES = [
+    {"id": "doris-local", "name": "Doris Local", "addr": "Невский проспект, 150", "desc": "Уютная кофейня, известная чизкейком и фильтр-кофе.", "moods": ["sit", "warm"], "lat": 59.92881, "lon": 30.37322, "q": "Doris Local, Невский проспект, 150, Санкт-Петербург"},
+    {"id": "doris-frag", "name": "Doris Fragments", "addr": "Тележная улица, 8–10", "desc": "Кафе с камином и красивым интерьером.", "moods": ["sit", "warm", "photo"], "lat": 59.92668, "lon": 30.3734, "q": "Doris Fragments, Тележная улица, 8–10, Санкт-Петербург"},
+    {"id": "verle", "name": "Verle", "addr": "Каменноостровский проспект, 25", "desc": "Минималистичная кофейня в сквере, летом столики на улице.", "moods": ["sit", "warm", "photo"], "lat": 59.96333, "lon": 30.31458, "q": "Verle, Каменноостровский проспект, 25, Санкт-Петербург"},
+    {"id": "coop", "name": "Co-op Garage", "addr": "Гороховая улица, 47", "desc": "Бар во дворе с бильярдом и музыкой, работает допоздна.", "moods": ["sit"], "lat": 59.92708, "lon": 30.3227, "q": "Co-op Garage, Гороховая улица, 47, Санкт-Петербург"},
+    {"id": "character", "name": "Характер кофе", "addr": "набережная Фонтанки, 109", "desc": "Скандинавский интерьер, пледы и булочки с корицей по выходным.", "moods": ["sit", "warm"], "lat": 59.9229, "lon": 30.31897, "q": "Характер кофе, набережная Фонтанки, 109, Санкт-Петербург"},
+    {"id": "colors", "name": "Colors", "addr": "улица Ленина, 27", "desc": "Кофейня в пастельных тонах с десертами и завтраками.", "moods": ["sit", "warm", "photo"], "lat": 59.96346, "lon": 30.30221, "q": "Colors, улица Ленина, 27, Санкт-Петербург"},
+    {"id": "opetit-nev", "name": "O'petit на Невском", "addr": "Невский проспект, 12", "desc": "Французская выпечка в маленьком зале на втором этаже с видом на Невский.", "moods": ["sit", "warm", "photo"], "lat": 59.93682, "lon": 30.31573, "q": "O'petit на Невском, Невский проспект, 12, Санкт-Петербург"},
+    {"id": "opetit-nek", "name": "O'petit bistro на Некрасова", "addr": "улица Некрасова, 14А", "desc": "Бистро с большими окнами, лучше бронировать стол.", "moods": ["sit", "warm"], "lat": 59.93907, "lon": 30.35324, "q": "O'petit bistro на Некрасова, улица Некрасова, 14А, Санкт-Петербург"},
+    {"id": "opetit-blo", "name": "O'petit на Блохина", "addr": "улица Блохина, 21", "desc": "Булочная и кофейня на Петроградской с хлебом и десертами.", "moods": ["sit", "warm"], "lat": 59.95227, "lon": 30.29729, "q": "O'petit на Блохина, улица Блохина, 21, Санкт-Петербург"},
+    {"id": "flor", "name": "Flor", "addr": "улица Рубинштейна, 14", "desc": "Ресторан с португальской концепцией и свежим ремонтом.", "moods": ["sit"], "lat": 59.931, "lon": 30.34544, "q": "Flor, улица Рубинштейна, 14, Санкт-Петербург"},
+    {"id": "sad", "name": "Сад", "addr": "Большая Зеленина, 23А", "desc": "Ресторан с яблоневым садом во дворе, летом столики под деревьями.", "moods": ["sit", "photo"], "lat": 59.96307, "lon": 30.28918, "q": "Сад, Большая Зеленина, 23А, Санкт-Петербург"},
+    {"id": "ivory", "name": "Ivory Garden", "addr": "8-я Советская, 9–13", "desc": "Светлый зал с люстрами и двор с зеленью, хорошие завтраки.", "moods": ["sit", "photo"], "lat": 59.93696, "lon": 30.3724, "q": "Ivory Garden, 8-я Советская, 9–13, Санкт-Петербург"},
+    {"id": "betulla", "name": "Osteria Betulla", "addr": "9-я Советская, 1", "desc": "Итальянская остерия на 9-й Советской.", "moods": ["sit"], "lat": 59.93854, "lon": 30.37004, "q": "Osteria Betulla, 9-я Советская, 1, Санкт-Петербург"},
+    {"id": "animals", "name": "Animals", "addr": "улица Некрасова, 60", "desc": "Яркий зал с длинным столом, живыми цветами и меню на каждый день.", "moods": ["sit", "photo"], "lat": 59.9384, "lon": 30.36816, "q": "Animals, улица Некрасова, 60, Санкт-Петербург"},
+    {"id": "tigerlily", "name": "Tiger Lily", "addr": "Итальянская улица, 19", "desc": "Китайская кухня, вход через цветочный магазин.", "moods": ["sit", "photo"], "lat": 59.936, "lon": 30.33461, "q": "Tiger Lily, Итальянская улица, 19, Санкт-Петербург"},
+    {"id": "joli", "name": "Joli", "addr": "улица Восстания, 45Б", "desc": "Светлый зал с красивой посудой.", "moods": ["sit", "photo"], "lat": 59.9414, "lon": 30.36102, "q": "Joli, улица Восстания, 45Б, Санкт-Петербург"},
+    {"id": "juan", "name": "Juan Cantina Española", "addr": "улица Восстания, 45Б", "desc": "Испанская кухня и открытая кухня посреди зала.", "moods": ["sit"], "lat": 59.9414, "lon": 30.36102, "q": "Juan Cantina Española, улица Восстания, 45Б, Санкт-Петербург"},
+    {"id": "zoe", "name": "ZOE", "addr": "улица Радищева, 29", "desc": "Пекарня с булочками и сэндвичами на закваске.", "moods": ["sit", "warm"], "lat": 59.93917, "lon": 30.36384, "q": "ZOE, улица Радищева, 29, Санкт-Петербург"},
+    {"id": "medici", "name": "Medici bistro", "addr": "проспект Медиков, 10 к1", "desc": "Небольшое итальянское бистро с пиццей из дровяной печи.", "moods": ["sit"], "lat": 59.97341, "lon": 30.31517, "q": "Medici bistro, проспект Медиков, 10 к1, Санкт-Петербург"},
+    {"id": "yi", "name": "Юи", "addr": "Стрельнинская улица, 2", "desc": "Азиатская кухня и бар, есть столики на улице.", "moods": ["sit"], "lat": 59.95934, "lon": 30.29966, "q": "Юи, Стрельнинская улица, 2, Санкт-Петербург"},
+    {"id": "sloy-nev", "name": "Sloy на Невском", "addr": "Невский проспект, 136", "desc": "Пекарня и кафе: вафли, десерты и завтраки.", "moods": ["sit", "warm"], "lat": 59.93, "lon": 30.36786, "q": "Sloy на Невском, Невский проспект, 136, Санкт-Петербург"},
+    {"id": "sloy-may", "name": "Sloy на Маяковского", "addr": "улица Маяковского, 3", "desc": "Белый современный зал, много десертов.", "moods": ["sit", "warm"], "lat": 59.93387, "lon": 30.35479, "q": "Sloy на Маяковского, улица Маяковского, 3, Санкт-Петербург"},
+    {"id": "civil-vol", "name": "Civil Coffee Bar на Волынском", "addr": "Волынский переулок, 8", "desc": "Кофейня в скандинавском стиле с лёгкими завтраками.", "moods": ["sit", "warm"], "lat": 59.93848, "lon": 30.32169, "q": "Civil Coffee Bar на Волынском, Волынский переулок, 8, Санкт-Петербург"},
+    {"id": "civil-8sov", "name": "Civil на 8-й Советской", "addr": "8-я Советская, 4", "desc": "Просторный лофт с большим выбором завтраков.", "moods": ["sit", "warm"], "lat": 59.93795, "lon": 30.37041, "q": "Civil на 8-й Советской, 8-я Советская, 4, Санкт-Петербург"},
+    {"id": "civil-pet", "name": "Civil на Большом проспекте", "addr": "Большой проспект П.С., 71", "desc": "Кофейня, где удобно работать за ноутбуком.", "moods": ["sit", "warm"], "lat": 59.96464, "lon": 30.31046, "q": "Civil на Большом проспекте, Большой проспект П.С., 71, Санкт-Петербург"},
+    {"id": "frangipani", "name": "Frangipani", "addr": "Кирочная улица, 9", "desc": "Уютный ресторан на Кирочной.", "moods": ["sit"], "lat": 59.94381, "lon": 30.35414, "q": "Frangipani, Кирочная улица, 9, Санкт-Петербург"},
+    {"id": "casper", "name": "Casper", "addr": "Кирочная улица, 5Г", "desc": "Бистро и бар в скандинавском духе.", "moods": ["sit", "photo"], "lat": 59.94385, "lon": 30.35237, "q": "Casper, Кирочная улица, 5Г, Санкт-Петербург"},
+    {"id": "kaiju", "name": "Kaiju", "addr": "Кирочная улица, 12", "desc": "Японская кухня, ролы и рамен, в зале настольный футбол.", "moods": ["sit"], "lat": 59.9442, "lon": 30.35414, "q": "Kaiju, Кирочная улица, 12, Санкт-Петербург"},
+    {"id": "peshehod", "name": "Пешеход", "addr": "улица Маяковского, 54–56", "desc": "Кафе с завтраками, блинами и чизкейком, там хорошо снимать.", "moods": ["sit", "warm", "photo"], "lat": 59.94372, "lon": 30.35528, "q": "Пешеход, улица Маяковского, 54–56, Санкт-Петербург"},
+    {"id": "shum", "name": "Шум", "addr": "улица Маяковского, 52", "desc": "Бар с живой музыкой.", "moods": ["sit"], "lat": 59.94294, "lon": 30.35511, "q": "Шум, улица Маяковского, 52, Санкт-Петербург", "note": "с 18:00"},
+    {"id": "vox", "name": "Vox", "addr": "улица Пестеля, 4", "desc": "Итальянский ресторан рядом с Летним садом.", "moods": ["sit"], "lat": 59.94268, "lon": 30.34176, "q": "Vox, улица Пестеля, 4, Санкт-Петербург"},
+    {"id": "casimir", "name": "Casimir Coffee", "addr": "Гагаринская улица, 34", "desc": "Небольшая кофейня с хорошим кофе.", "moods": ["sit", "warm"], "lat": 59.94316, "lon": 30.34329, "q": "Casimir Coffee, Гагаринская улица, 34, Санкт-Петербург"},
+    {"id": "meal", "name": "Meal", "addr": "Литейный проспект, 17–19", "desc": "Ресторан с сезонным меню и ферментацией, нужна бронь.", "moods": ["sit"], "lat": 59.9437, "lon": 30.34786, "q": "Meal, Литейный проспект, 17–19, Санкт-Петербург"},
+    {"id": "marso", "name": "Marso Polo", "addr": "набережная канала Грибоедова, 2В", "desc": "Итальянская кухня с видом на канал и Михайловский сад.", "moods": ["sit", "photo"], "lat": 59.94105, "lon": 30.3303, "q": "Marso Polo, набережная канала Грибоедова, 2В, Санкт-Петербург"},
+    {"id": "hleb", "name": "Кафе на Хлебозаводе", "addr": "Барочная улица, 4А", "desc": "Новое кафе в отреставрированном здании хлебозавода, булочки и кофе.", "moods": ["sit", "warm", "photo"], "lat": 59.96594, "lon": 30.28453, "q": "Кафе на Хлебозаводе, Барочная улица, 4А, Санкт-Петербург"},
+    {"id": "angel", "name": "Angel Cakes на Новой Голландии", "addr": "наб. Адмиралтейского канала, 2И", "desc": "Десерты и завтраки на острове.", "moods": ["sit", "warm"], "lat": 59.93036, "lon": 30.29172, "q": "Angel Cakes на Новой Голландии, наб. Адмиралтейского канала, 2И, Санкт-Петербург"},
+    {"id": "tchk", "name": "Тчк", "addr": "улица Мира, 11", "desc": "Маленькая кофейня с вишнёвым пирогом, мест почти нет, берут с собой.", "moods": ["warm"], "lat": 59.95945, "lon": 30.31657, "q": "Тчк, улица Мира, 11, Санкт-Петербург"},
+    {"id": "nothing", "name": "Nothing Fancy", "addr": "Социалистическая улица, 21", "desc": "Минималистичное кафе с панорамными окнами и завтраками.", "moods": ["sit", "warm"], "lat": 59.92018, "lon": 30.34584, "q": "Nothing Fancy, Социалистическая улица, 21, Санкт-Петербург"},
+    {"id": "hochu", "name": "Хочу харчо", "addr": "Садовая улица, 39/41", "desc": "Грузинская кухня, работает круглосуточно.", "moods": ["sit", "warm"], "lat": 59.92631, "lon": 30.31583, "q": "Хочу харчо, Садовая улица, 39/41, Санкт-Петербург"},
+    {"id": "mere", "name": "Mere", "addr": "Лодейнопольская улица, 7", "desc": "Бистро с сырниками и яблочным пирогом.", "moods": ["sit", "warm"], "lat": 59.96453, "lon": 30.2902, "q": "Mere, Лодейнопольская улица, 7, Санкт-Петербург"},
+    {"id": "rene", "name": "Rene", "addr": "Невский проспект, 28", "desc": "Кафе на втором этаже Дома книги с видом на Невский.", "moods": ["sit", "warm", "photo"], "lat": 59.93572, "lon": 30.32575, "q": "Rene, Невский проспект, 28, Санкт-Петербург"},
+    {"id": "ponte-pes", "name": "Ponte на Пестеля", "addr": "улица Пестеля, 13–15", "desc": "Итальянский ресторан с верандой.", "moods": ["sit"], "lat": 59.94244, "lon": 30.34284, "q": "Ponte на Пестеля, улица Пестеля, 13–15, Санкт-Петербург"},
+    {"id": "ponte-rub", "name": "Ponte на Рубинштейна", "addr": "улица Рубинштейна, 15–17", "desc": "Итальянская кухня с домашней пастой.", "moods": ["sit"], "lat": 59.92866, "lon": 30.34348, "q": "Ponte на Рубинштейна, улица Рубинштейна, 15–17, Санкт-Петербург"},
+    {"id": "gills", "name": "Gill's", "addr": "Казанская улица, 8–10", "desc": "Японская кухня с необычными роллами.", "moods": ["sit"], "lat": 59.9327, "lon": 30.32223, "q": "Gill's, Казанская улица, 8–10, Санкт-Петербург"},
+    {"id": "duoasia", "name": "Duo Asia", "addr": "улица Рубинштейна, 20", "desc": "Азиатская кухня и открытая кухня в центре зала.", "moods": ["sit"], "lat": 59.93014, "lon": 30.34477, "q": "Duo Asia, улица Рубинштейна, 20, Санкт-Петербург"},
+    {"id": "alto", "name": "Alto", "addr": "Караванная улица, 5", "desc": "Кофейня-бистро с пончиками, вечером работает как бар.", "moods": ["sit", "warm"], "lat": 59.93483, "lon": 30.34098, "q": "Alto, Караванная улица, 5, Санкт-Петербург"},
+    {"id": "kruch", "name": "Круч", "addr": "Корпусная улица, 9", "desc": "Кондитерская, круассаны наполняют при заказе.", "moods": ["sit", "warm"], "lat": 59.96193, "lon": 30.28851, "q": "Круч, Корпусная улица, 9, Санкт-Петербург"},
+    {"id": "mia", "name": "Mia Strada", "addr": "улица Восстания, 19", "desc": "Ресторан с домашней кухней.", "moods": ["sit"], "lat": 59.93517, "lon": 30.36048, "q": "Mia Strada, улица Восстания, 19, Санкт-Петербург"},
+    {"id": "monchou", "name": "Mon Chou Chou", "addr": "Караванная улица, 3/35", "desc": "Французская кухня, большие окна и бенедикты.", "moods": ["sit", "photo"], "lat": 59.93531, "lon": 30.34086, "q": "Mon Chou Chou, Караванная улица, 3/35, Санкт-Петербург"},
+    {"id": "jackchan", "name": "Jack & Chan", "addr": "Инженерная улица, 7", "desc": "Азиатская кухня в центре, тёплый свет в зале.", "moods": ["sit"], "lat": 59.93727, "lon": 30.33687, "q": "Jack & Chan, Инженерная улица, 7, Санкт-Петербург"},
+    {"id": "duo", "name": "Duo", "addr": "Кирочная улица, 8Б", "desc": "Гастробар с небольшим садом рядом с кирхой святой Анны.", "moods": ["sit", "photo"], "lat": 59.94418, "lon": 30.35126, "q": "Duo, Кирочная улица, 8Б, Санкт-Петербург"},
+    {"id": "ciao", "name": "Ciao", "addr": "Ординарная улица, 19", "desc": "Итальянская кухня, веранда и неаполитанская пицца.", "moods": ["sit"], "lat": 59.96759, "lon": 30.30544, "q": "Ciao, Ординарная улица, 19, Санкт-Петербург"},
+    {"id": "gusary", "name": "Гусары", "addr": "набережная Фонтанки, 40/68", "desc": "Винный бар с винтажным интерьером и видом на Фонтанку.", "moods": ["sit", "photo"], "lat": 59.93383, "lon": 30.34445, "q": "Гусары, набережная Фонтанки, 40/68, Санкт-Петербург"},
+    {"id": "peremena", "name": "Перемена", "addr": "Петроградская набережная, 18", "desc": "Большой ресторан на набережной.", "moods": ["sit"], "lat": 59.95957, "lon": 30.33384, "q": "Перемена, Петроградская набережная, 18, Санкт-Петербург"},
+    {"id": "lyudi", "name": "Люди кофе", "addr": "Басков переулок, 1/3", "desc": "Кофейня с книгами и кинопоказами.", "moods": ["sit", "warm"], "lat": 59.93945, "lon": 30.35053, "q": "Люди кофе, Басков переулок, 1/3, Санкт-Петербург"},
+    {"id": "benois", "name": "Кафе Бенуа", "addr": "набережная канала Грибоедова, 2", "desc": "Кафе в корпусе Бенуа Русского музея.", "moods": ["sit", "warm"], "lat": 59.93871, "lon": 30.32824, "q": "Кафе Бенуа, набережная канала Грибоедова, 2, Санкт-Петербург"},
+    {"id": "bside", "name": "B-Side", "addr": "наб. Адмиралтейского канала, 2", "desc": "Бистро на Новой Голландии.", "moods": ["sit"], "lat": 59.92961, "lon": 30.28792, "q": "B-Side, наб. Адмиралтейского канала, 2, Санкт-Петербург"},
+    {"id": "prosa", "name": "Prosa", "addr": "набережная канала Грибоедова, 5", "desc": "Лофт с винтажным интерьером, лучше бронировать.", "moods": ["sit", "photo"], "lat": 59.93949, "lon": 30.3275, "q": "Prosa, набережная канала Грибоедова, 5, Санкт-Петербург"},
+    {"id": "saigo", "name": "Saigo", "addr": "набережная канала Грибоедова, 5", "desc": "Японская изакая с рамэном и открытой кухней.", "moods": ["sit"], "lat": 59.93964, "lon": 30.32758, "q": "Saigo, набережная канала Грибоедова, 5, Санкт-Петербург"},
+    {"id": "saviv", "name": "Saviv", "addr": "Большая Конюшенная, 9", "desc": "Израильская кухня: шакшука и хумус.", "moods": ["sit"], "lat": 59.93991, "lon": 30.3237, "q": "Saviv, Большая Конюшенная, 9, Санкт-Петербург"},
+    {"id": "chang", "name": "Chang", "addr": "Невский проспект, 97", "desc": "Тайская кухня на Невском.", "moods": ["sit"], "lat": 59.93011, "lon": 30.36673, "q": "Chang, Невский проспект, 97, Санкт-Петербург"},
+    {"id": "d-kanshin", "name": "Особняк Каншина", "addr": "Кузнечный переулок, 6", "desc": "Купидоны и кариатиды, бело-голубая отделка с позолотой. Парадная открыта.", "moods": ["photo", "walk"], "lat": 59.92756, "lon": 30.35045, "note": "Красивая дверь", "door": true, "q": "Кузнечный переулок, 6, Санкт-Петербург"},
+    {"id": "d-rot", "name": "Доходный дом Рот", "addr": "Пушкинская улица, 18", "desc": "Дверь-портал с арками и деревянными кокошниками. Снимать снаружи.", "moods": ["photo", "walk"], "lat": 59.92806, "lon": 30.35699, "note": "Красивая дверь", "door": true, "q": "Пушкинская улица, 18, Санкт-Петербург"},
+    {"id": "d-nikonov", "name": "Дом Никонова", "addr": "Колокольная улица, 11", "desc": "Высокая арка с цветной керамикой, дом похож на терем.", "moods": ["photo", "walk"], "lat": 59.92836, "lon": 30.35183, "note": "Красивая дверь", "door": true, "q": "Колокольная улица, 11, Санкт-Петербург"},
+    {"id": "d-bubyr", "name": "Дом Бубыря", "addr": "Стремянная улица, 11", "desc": "Арка из крупных булыжников и каменные стражи по бокам.", "moods": ["photo", "walk"], "lat": 59.93067, "lon": 30.35137, "note": "Красивая дверь", "door": true, "q": "Стремянная улица, 11, Санкт-Петербург"},
+    {"id": "d-palkin", "name": "Дом Палкина", "addr": "улица Рубинштейна, 4", "desc": "Дверь модерна с витражом-тюльпаном старше ста лет.", "moods": ["photo", "walk"], "lat": 59.93213, "lon": 30.34619, "note": "Красивая дверь", "door": true, "q": "улица Рубинштейна, 4, Санкт-Петербург"},
+    {"id": "d-solyanoy", "name": "Дом в Соляном переулке", "addr": "Соляной переулок, 14", "desc": "Две двери: жёлтая в каменном портале со стрекозами и зелёная с ручкой-кулаком.", "moods": ["photo", "walk"], "lat": 59.94324, "lon": 30.34192, "note": "Красивая дверь", "door": true, "q": "Соляной переулок, 14, Санкт-Петербург"},
+    {"id": "d-muruzi", "name": "Дом Мурузи", "addr": "Литейный проспект, 24", "desc": "Высокие арки с восточной лепниной, двери из дерева и стекла.", "moods": ["photo", "walk"], "lat": 59.94254, "lon": 30.35017, "note": "Красивая дверь", "door": true, "q": "Литейный проспект, 24, Санкт-Петербург"},
+    {"id": "d-sleptsov", "name": "Особняк Слепцова", "addr": "Большая Конюшенная, 9", "desc": "Модерн: лепные растения, кованая лестница, круглые окна с маскаронами. Парадная открыта.", "moods": ["photo", "walk"], "lat": 59.93559, "lon": 30.32071, "note": "Красивая дверь", "door": true, "q": "Большая Конюшенная, 9, Санкт-Петербург"},
+    {"id": "d-rossiya", "name": "Дом общества «Россия»", "addr": "Большая Морская, 35", "desc": "Северный модерн, витражи и изразцовые печи. Парадная открыта.", "moods": ["photo", "walk"], "lat": 59.93349, "lon": 30.31019, "note": "Красивая дверь", "door": true, "q": "Большая Морская, 35, Санкт-Петербург"},
+    {"id": "d-badaev", "name": "Дом с печальным ангелом", "addr": "улица Восстания, 19", "desc": "Дом Бадаева: керамические панно, лепные розы, камин с часами. Парадная открыта.", "moods": ["photo", "walk"], "lat": 59.93517, "lon": 30.36048, "note": "Красивая дверь", "door": true, "q": "улица Восстания, 19, Санкт-Петербург"},
+    {"id": "d-gorod", "name": "Дом городских учреждений", "addr": "Садовая улица, 55–57", "desc": "Фасад как у замка: башенки, совы, химеры и драконы. Вход открыт.", "moods": ["photo", "walk"], "lat": 59.92349, "lon": 30.30865, "note": "Красивая дверь", "door": true, "q": "Садовая улица, 55–57, Санкт-Петербург"},
+    {"id": "d-baka", "name": "Дом Бака", "addr": "Кирочная улица, 24", "desc": "Кованые козырьки, витражи и дубовые двери. Парадная на домофоне, снимайте снаружи.", "moods": ["photo", "walk"], "lat": 59.94416, "lon": 30.35743, "note": "Красивая дверь", "door": true, "q": "Кирочная улица, 24, Санкт-Петербург"},
+    {"id": "d-weiner", "name": "Дом Вейнера", "addr": "улица Чайковского, 38", "desc": "Мраморная лестница, лепнина и амуры под потолком. Вход по домофону.", "moods": ["photo", "walk"], "lat": 59.94668, "lon": 30.3584, "note": "Красивая дверь", "door": true, "q": "улица Чайковского, 38, Санкт-Петербург"},
+    {"id": "d-krayevsky", "name": "Дом Краевского", "addr": "переулок Ульяны Громовой, 4", "desc": "Деревянный тамбур, кариатиды и лепные грифоны. Вход по домофону.", "moods": ["photo", "walk"], "lat": 59.93435, "lon": 30.36111, "note": "Красивая дверь", "door": true, "q": "переулок Ульяны Громовой, 4, Санкт-Петербург"},
+    {"id": "d-dekht", "name": "Дом Дехтеринского", "addr": "Загородный проспект, 26", "desc": "Морская тема: лепные ракушки и лестница-волна. Вход по домофону.", "moods": ["photo", "walk"], "lat": 59.92532, "lon": 30.34077, "note": "Красивая дверь", "door": true, "q": "Загородный проспект, 26, Санкт-Петербург"},
+    {"id": "mihsad", "name": "Михайловский сад", "desc": "Пруд, дорожки и скамейки, осенью много листвы.", "moods": ["walk"], "lat": 59.9392, "lon": 30.3322},
+    {"id": "nh", "name": "Новая Голландия", "desc": "Остров с кирпичными арками, кафе и большой лужайкой.", "moods": ["walk", "sit"], "lat": 59.9298, "lon": 30.2896},
+    {"id": "tavr", "name": "Таврический сад", "desc": "Большой парк с прудами и аллеями.", "moods": ["walk", "photo"], "lat": 59.9459, "lon": 30.3772},
+    {"id": "apteka", "name": "Аптекарский огород", "desc": "Оранжереи с тропическими растениями, внутри тепло.", "moods": ["warm", "walk", "photo"], "lat": 59.9704, "lon": 30.3246},
+    {"id": "etazhi", "name": "Лофт Проект Этажи", "desc": "Лофт с кафе, галереями и магазинами.", "moods": ["sit", "warm", "photo"], "lat": 59.9224, "lon": 30.3561},
+  ];
+
+  function load(k, d) { try { var v = localStorage.getItem('kd.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem('kd.' + k, JSON.stringify(v)); } catch (e) {} }
+
+  var state = {
+    tab: 'near',
+    station: load('station', 'gd'),
+    mood: load('mood', 'all'),
+    favs: load('favs', {}),
+    reports: load('reports', {}),
+    props: load('props', []),
+    savedTab: 'want',
+    q: ''
+  };
+  if (!byStation(state.station)) state.station = 'gd';
+  if (!MOODS.some(function (m) { return m[0] === state.mood; })) state.mood = 'all';
+
+  function byStation(id) { return STATIONS.filter(function (s) { return s.id === id; })[0]; }
+  function byPlace(id) { return PLACES.filter(function (p) { return p.id === id; })[0]; }
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  function hav(a, b) {
+    var t = Math.PI / 180, dLat = (b.lat - a.lat) * t, dLon = (b.lon - a.lon) * t;
+    var x = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(a.lat * t) * Math.cos(b.lat * t) * Math.pow(Math.sin(dLon / 2), 2);
+    return 2 * 6371 * Math.asin(Math.sqrt(x));
+  }
+  // 5 км/ч и запас 25% на повороты улиц
+  function mins(st, pl) { return Math.max(1, Math.round(hav(st, pl) * 15)); }
+  function mapUrl(p) { return 'https://yandex.ru/maps/?text=' + encodeURIComponent(p.q || (p.name + ', Санкт-Петербург')); }
+
+  var HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.500c-.2 0-7.800-4.700-9.300-9.800C1.700 7.300 3.900 4.500 7 4.500c2 0 3.700 1 5 2.900 1.300-1.900 3-2.900 5-2.900 3.100 0 5.300 2.800 4.300 6.200-1.500 5.100-9.100 9.800-9.300 9.800z"/></svg>';
+
+  function tagsHTML(p) { return (p.note ? '<span class="tag tag-note">' + esc(p.note) + '</span>' : '') + p.moods.map(function (m) { return '<span class="tag">' + MOOD_LABEL[m] + '</span>'; }).join(''); }
+
+  function cardHTML(p, m, mode) {
+    var shown = m > 99 ? '99+' : m;
+    var rep = !!state.reports[p.id];
+    var html = '<li class="card' + (rep ? ' reported' : '') + '"><div class="time"><b>' + shown + '</b><span>мин</span></div><div style="min-width:0"><h3>' + esc(p.name) + '</h3>' +
+      (p.addr ? '<p class="addr">' + esc(p.addr) + '</p>' : '') +
+      '<p class="desc">' + esc(p.desc) + '</p><div class="meta">' + tagsHTML(p) +
+      '<a class="maplink" href="' + mapUrl(p) + '" target="_blank" rel="noopener">На карте ↗</a>' +
+      '<button class="link-btn" data-act="report" data-id="' + p.id + '">' + (rep ? 'Отменить отметку' : (p.door ? 'Дверь изменилась?' : 'Закрылось?')) + '</button></div>' +
+      (rep ? '<p class="note" style="margin-top:6px">Отметили, проверим это место.</p>' : '') + '</div>';
+    if (mode === 'near') {
+      var on = !!state.favs[p.id];
+      html += '<button class="heart" data-act="fav" data-id="' + p.id + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Убрать из сохранённого: ' : 'Сохранить: ') + esc(p.name) + '">' + HEART + '</button>';
+    } else {
+      var st = state.favs[p.id];
+      html += '<span></span><div class="actions">' +
+        (st === 'want' ? '<button class="btn-small" data-act="status" data-id="' + p.id + '" data-status="been">Были здесь</button>' : '<button class="btn-small" data-act="status" data-id="' + p.id + '" data-status="want">Хочу снова</button>') +
+        '<button class="btn-small" data-act="unfav" data-id="' + p.id + '">Убрать</button></div>';
+    }
+    return html + '</li>';
+  }
+
+  function renderStation() {
+    var st = byStation(state.station);
+    $('stName').textContent = st.name;
+    $('stDot').style.setProperty('--c', LINE[st.line]);
+    var q = state.q.trim().toLowerCase().replace(/ё/g, 'е');
+    var list = STATIONS.filter(function (s) { return !q || s.name.toLowerCase().replace(/ё/g, 'е').indexOf(q) !== -1; });
+    $('stList').innerHTML = list.length ? list.map(function (s) {
+      var n = PLACES.filter(function (p) { return mins(s, p) <= 20; }).length;
+      return '<li><button class="st-item" data-act="station" data-id="' + s.id + '"' + (s.id === state.station ? ' aria-current="true"' : '') + '><span class="dot" style="--c:' + LINE[s.line] + '"></span><span>' + esc(s.name) + '</span><span class="count">' + n + '</span></button></li>';
+    }).join('') : '<li class="note" style="padding:8px">Такой станции пока нет. В версии для всего города будут все станции.</li>';
+  }
+
+  function renderMoods() {
+    $('moods').innerHTML = MOODS.map(function (m) {
+      return '<button class="chip" data-act="mood" data-mood="' + m[0] + '" aria-pressed="' + (state.mood === m[0]) + '">' + m[1] + '</button>';
+    }).join('');
+  }
+
+  function renderNear() {
+    var st = byStation(state.station);
+    var items = PLACES.filter(function (p) { return state.mood === 'all' || p.moods.indexOf(state.mood) !== -1; })
+      .map(function (p) { return { p: p, m: mins(st, p) }; })
+      .filter(function (x) { return x.m <= 35; })
+      .sort(function (a, b) { return a.m - b.m; });
+    var groups = [
+      ['До 10 минут пешком', function (x) { return x.m <= 10; }],
+      ['10–20 минут', function (x) { return x.m > 10 && x.m <= 20; }],
+      ['20–35 минут', function (x) { return x.m > 20; }]
+    ];
+    var html = groups.map(function (g) {
+      var part = items.filter(g[1]);
+      if (!part.length) return '';
+      return '<section class="group"><h2>' + g[0] + ' <span>' + part.length + '</span></h2><ul class="cards">' + part.map(function (x) { return cardHTML(x.p, x.m, 'near'); }).join('') + '</ul></section>';
+    }).join('');
+    if (!items.length) {
+      var alt = STATIONS.filter(function (s) { return s.id !== st.id; }).map(function (s) {
+        var n = PLACES.filter(function (p) { return (state.mood === 'all' || p.moods.indexOf(state.mood) !== -1) && mins(s, p) <= 20; }).length;
+        return { s: s, n: n };
+      }).filter(function (x) { return x.n > 0; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 3);
+      html = '<div class="empty"><h3>Рядом с этой станцией ничего не нашлось</h3><p>Попробуйте другое настроение или станцию, где выбор больше.</p><div class="row">' +
+        '<button class="btn-small" data-act="mood" data-mood="all">Показать всё подряд</button>' +
+        alt.map(function (x) { return '<button class="btn-small" data-act="station" data-id="' + x.s.id + '">' + esc(x.s.name) + ' · ' + x.n + '</button>'; }).join('') + '</div></div>';
+    }
+    $('groups').innerHTML = html;
+  }
+
+  function renderSaved() {
+    var st = byStation(state.station);
+    var want = [], been = [];
+    Object.keys(state.favs).forEach(function (id) { var p = byPlace(id); if (!p) return; (state.favs[id] === 'been' ? been : want).push(p); });
+    $('savedSeg').innerHTML =
+      '<button class="chip" data-act="savedTab" data-st="want" aria-pressed="' + (state.savedTab === 'want') + '">Хочу сходить · ' + want.length + '</button>' +
+      '<button class="chip" data-act="savedTab" data-st="been" aria-pressed="' + (state.savedTab === 'been') + '">Были · ' + been.length + '</button>';
+    var list = (state.savedTab === 'want' ? want : been).map(function (p) { return { p: p, m: mins(st, p) }; }).sort(function (a, b) { return a.m - b.m; });
+    if (!list.length) {
+      $('savedList').innerHTML = '<div class="empty"><h3>' + (state.savedTab === 'want' ? 'Пока ничего не сохранено' : 'Здесь появятся места, где вы уже были') + '</h3><p>' +
+        (state.savedTab === 'want' ? 'Нажмите сердечко у места на вкладке «Рядом», и оно окажется здесь.' : 'Отметьте место кнопкой «Были здесь» в списке «Хочу сходить».') + '</p></div>';
+      $('savedNote').textContent = '';
+    } else {
+      $('savedList').innerHTML = '<ul class="cards">' + list.map(function (x) { return cardHTML(x.p, x.m, 'saved'); }).join('') + '</ul>';
+      $('savedNote').textContent = 'Время пешком считается от станции «' + st.name + '».';
+    }
+    var total = want.length + been.length;
+    $('savedBadge').hidden = total === 0;
+    $('savedBadge').textContent = total;
+  }
+
+  function renderProps() {
+    $('propsHead').hidden = !state.props.length;
+    $('propsList').innerHTML = state.props.map(function (p, i) {
+      return '<li class="prop"><div class="top"><strong>' + esc(p.name) + '</strong><button class="btn-small" data-act="delProp" data-i="' + i + '">Удалить</button></div><span class="note">' + (p.kind ? esc(p.kind) + ' · ' : '') + esc(p.station) + '</span><span>' + esc(p.why) + '</span></li>';
+    }).join('');
+  }
+
+  function renderTabs() {
+    ['near', 'saved', 'add'].forEach(function (t) {
+      $('tab-' + t).setAttribute('aria-selected', String(state.tab === t));
+      $('view-' + t).hidden = state.tab !== t;
+    });
+  }
+
+  function renderAll() { renderTabs(); renderStation(); renderMoods(); renderNear(); renderSaved(); renderProps(); }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]');
+    if (!b) return;
+    var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
+    if (act === 'tab') { state.tab = b.getAttribute('data-tab'); renderTabs(); return; }
+    if (act === 'stToggle') {
+      var open = $('stPanel').hidden;
+      $('stPanel').hidden = !open;
+      b.setAttribute('aria-expanded', String(open));
+      if (open) $('stQ').focus();
+      return;
+    }
+    if (act === 'station') {
+      state.station = id; state.q = ''; $('stQ').value = '';
+      $('stPanel').hidden = true; $('stToggle').setAttribute('aria-expanded', 'false');
+      state.tab = 'near'; save('station', id); renderAll(); return;
+    }
+    if (act === 'mood') { state.mood = b.getAttribute('data-mood'); save('mood', state.mood); renderMoods(); renderNear(); return; }
+    if (act === 'fav') {
+      if (state.favs[id]) delete state.favs[id]; else state.favs[id] = 'want';
+      save('favs', state.favs); renderNear(); renderSaved(); return;
+    }
+    if (act === 'status') { state.favs[id] = b.getAttribute('data-status'); save('favs', state.favs); renderSaved(); renderNear(); return; }
+    if (act === 'unfav') { delete state.favs[id]; save('favs', state.favs); renderSaved(); renderNear(); return; }
+    if (act === 'report') {
+      if (state.reports[id]) delete state.reports[id]; else state.reports[id] = true;
+      save('reports', state.reports); renderNear(); renderSaved(); return;
+    }
+    if (act === 'savedTab') { state.savedTab = b.getAttribute('data-st'); renderSaved(); return; }
+    if (act === 'delProp') { state.props.splice(+b.getAttribute('data-i'), 1); save('props', state.props); renderProps(); return; }
+  });
+
+  $('stQ').addEventListener('input', function (e) { state.q = e.target.value; renderStation(); });
+
+  $('p-station').innerHTML = STATIONS.map(function (s) { return '<option value="' + esc(s.name) + '">' + esc(s.name) + '</option>'; }).join('') + '<option value="Другая станция">Другая станция</option>';
+
+  $('propForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('p-name').value.trim(), why = $('p-why').value.trim();
+    if (!name || !why) { $('propStatus').textContent = 'Заполните название и пару слов о том, чем место красиво.'; return; }
+    state.props.unshift({ kind: $('p-kind').value, name: name, station: $('p-station').value, why: why });
+    save('props', state.props);
+    $('p-name').value = ''; $('p-why').value = '';
+    $('propStatus').textContent = 'Заявка сохранена на этом устройстве.';
+    renderProps();
+  });
+
+  renderAll();
+})();
+</script>
+
+</body>
+</html>
