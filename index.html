@@ -152,6 +152,31 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .link-btn:hover { color: var(--ink); }
 .card.reported { opacity: .6; }
 
+.title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.chev { flex: none; width: 36px; height: 36px; margin: -7px -7px 0 0; display: grid; place-items: center; border: 0; background: transparent; border-radius: 50%; color: var(--muted); }
+.chev:hover { background: var(--surface-2); }
+.chev svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.card.open .chev svg { transform: rotate(180deg); }
+.media[data-act] { cursor: pointer; }
+.more { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.more h4 { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.recs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.recs li { display: grid; gap: 1px; padding-left: 12px; border-left: 2px solid var(--accent); }
+.recs b { font-weight: 600; }
+.recs span { color: var(--muted); font-size: 13px; }
+.strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.thumb { position: relative; flex: none; width: 92px; height: 92px; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--surface-2); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb i { position: absolute; left: 4px; right: 4px; bottom: 4px; font-style: normal; font-size: 10.5px; line-height: 1.2; padding: 2px 5px; border-radius: 6px; background: var(--surface); color: var(--ink); text-align: center; }
+.add-row { display: flex; flex-wrap: wrap; gap: 8px; }
+label.btn-small { cursor: pointer; }
+label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lb { position: fixed; inset: 0; z-index: 10; background: rgba(10, 10, 16, .92); display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; padding: 16px; }
+.lb[hidden] { display: none; }
+.lb img { width: 100%; height: 100%; object-fit: contain; min-height: 0; }
+.lb .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.lb .btn-small { color: #fff; border-color: rgba(255, 255, 255, .45); padding: 10px 16px; }
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -224,11 +249,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
       </div>
       <button class="btn-main" type="submit">Предложить место</button>
       <p class="status" id="propStatus" role="status"></p>
-      <p class="note">В этой версии заявки хранятся только на вашем устройстве и никуда не отправляются. В сервисе они попадут в очередь проверки.</p>
+      <p class="note">Заявка уходит на проверку. Если связи нет, она сохранится на устройстве и отправится позже.</p>
     </form>
     <p class="h-sub" id="propsHead" hidden>Ваши заявки</p>
     <ul class="props" id="propsList"></ul>
   </section>
+</div>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Фото" hidden>
+  <img id="lbImg" alt="">
+  <div class="row">
+    <button class="btn-small" id="lbAct" data-act="lbAct" type="button"></button>
+    <button class="btn-small" data-act="lbClose" id="lbClose" type="button">Закрыть</button>
+  </div>
 </div>
 
 <script>
@@ -340,6 +373,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
     {"id": "etazhi", "name": "Лофт Проект Этажи", "desc": "Лофт с кафе, галереями и магазинами.", "moods": ["sit", "warm", "photo"], "lat": 59.9224, "lon": 30.3561},
   ];
 
+  // Рекомендации: id места -> [[позиция, пометка], ...]. Пример:
+  // 'doris-local': [['Круассан с фисташкой', 'берут все'], ['Флэт уайт', '']],
+  // Для дверей здесь пишут подсказки «как снимать», для прогулок «что посмотреть».
+  var RECS = {
+  };
+
   function load(k, d) { try { var v = localStorage.getItem('kd.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
   function save(k, v) { try { localStorage.setItem('kd.' + k, JSON.stringify(v)); } catch (e) {} }
 
@@ -351,7 +390,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
     reports: load('reports', {}),
     props: load('props', []),
     savedTab: 'want',
-    q: ''
+    q: '',
+    open: null,
+    msg: null,
+    remote: {},
+    local: [],
+    lb: null,
+    flags: load('flags', {}),
+    repSent: load('repsent', {})
   };
   if (!byStation(state.station)) state.station = 'gd';
   if (!MOODS.some(function (m) { return m[0] === state.mood; })) state.mood = 'sit';
@@ -360,6 +406,202 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function byPlace(id) { return PLACES.filter(function (p) { return p.id === id; })[0]; }
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  // ---------- сервер (Supabase) ----------
+  var SB = { url: 'https://pgnxamklwakczuwlgqup.supabase.co', key: 'sb_publishable_S_lBgCODokV90yxdTkoW4Q_onyUFNRB' };
+  var LIMIT = 580 * 1024;
+  function uuid() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); }
+  var deviceId = load('device', null);
+  if (!deviceId) { deviceId = uuid(); save('device', deviceId); }
+
+  function sb(path, opts) {
+    opts = opts || {};
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 20000) : null;
+    var headers = { apikey: SB.key };
+    Object.keys(opts.headers || {}).forEach(function (k) { headers[k] = opts.headers[k]; });
+    return fetch(SB.url + path, { method: opts.method || 'GET', headers: headers, body: opts.body, signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (timer) clearTimeout(timer);
+        if (r.ok) return r;
+        return r.text().then(function (t) { var e = new Error('HTTP ' + r.status); e.status = r.status; e.body = t; throw e; });
+      }, function (e) { if (timer) clearTimeout(timer); throw e; });
+  }
+  function jsonPost(table, row, extra) {
+    extra = extra || {};
+    return sb('/rest/v1/' + table + (extra.q || ''), {
+      method: 'POST', body: JSON.stringify(row),
+      headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' + (extra.prefer ? ',' + extra.prefer : '') }
+    });
+  }
+  function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }
+
+  // ---------- личные фото в браузере (IndexedDB) ----------
+  var idb = null, urls = {};
+  function idbOpen() {
+    return new Promise(function (res, rej) {
+      if (idb) return res(idb);
+      try {
+        var rq = indexedDB.open('viaplaces', 1);
+        rq.onupgradeneeded = function () { rq.result.createObjectStore('photos', { keyPath: 'id' }); };
+        rq.onsuccess = function () { idb = rq.result; res(idb); };
+        rq.onerror = function () { rej(rq.error); };
+      } catch (e) { rej(e); }
+    });
+  }
+  function idbTx(mode, fn) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (res, rej) {
+        var tx = db.transaction('photos', mode), out = fn(tx.objectStore('photos'));
+        tx.oncomplete = function () { res(out && out.result); };
+        tx.onerror = tx.onabort = function () { rej(tx.error); };
+      });
+    });
+  }
+  function idbAll() { return idbTx('readonly', function (s) { return s.getAll(); }); }
+  function idbPut(rec) { return idbTx('readwrite', function (s) { return s.put(rec); }); }
+  function idbDel(id) { return idbTx('readwrite', function (s) { return s.delete(id); }); }
+  function blobUrl(rec) { return urls[rec.id] || (urls[rec.id] = URL.createObjectURL(rec.blob)); }
+
+  function refresh() { renderNear(); renderSaved(); }
+  function say(pid, text) { state.msg = { id: pid, text: text }; refresh(); }
+
+  function photosOf(pid) {
+    var out = [], approved = {};
+    (state.remote[pid] || []).forEach(function (r) {
+      approved[r.path] = 1;
+      if (state.flags[r.id]) return;
+      out.push({ key: r.id, src: SB.url + '/storage/v1/object/public/photos/' + encPath(r.path), kind: 'remote', pid: pid });
+    });
+    state.local.filter(function (l) { return l.place === pid && !approved[l.path]; })
+      .sort(function (a, b) { return b.t - a.t; })
+      .forEach(function (l) { out.push({ key: l.id, src: blobUrl(l), kind: 'local', rec: l, pid: pid }); });
+    return out;
+  }
+  function badgeOf(x) {
+    if (x.kind === 'remote') return '';
+    return x.rec.status === 'private' ? 'только вам' : (x.rec.status === 'pending' ? 'на проверке' : 'не отправлено');
+  }
+  function recTitle(p) { return p.door ? 'Как снимать' : (p.moods.indexOf('sit') !== -1 ? 'Что попробовать' : 'Что посмотреть'); }
+
+  function moreHTML(p, mode) {
+    var recs = RECS[p.id] || [], ph = photosOf(p.id);
+    var h = '<div class="more" id="more-' + mode + '-' + p.id + '"><h4>' + recTitle(p) + '</h4>';
+    h += recs.length
+      ? '<ul class="recs">' + recs.map(function (r) { return '<li><b>' + esc(r[0]) + '</b>' + (r[1] ? '<span>' + esc(r[1]) + '</span>' : '') + '</li>'; }).join('') + '</ul>'
+      : '<p class="note">Рекомендации скоро появятся.</p>';
+    h += '<h4>Фото</h4>';
+    if (ph.length) {
+      h += '<div class="strip">' + ph.map(function (x) {
+        var b = badgeOf(x);
+        return '<button class="thumb" type="button" data-act="photo" data-id="' + p.id + '" data-key="' + esc(x.key) + '" aria-label="Открыть фото"><img src="' + esc(x.src) + '" alt="" loading="lazy">' + (b ? '<i>' + b + '</i>' : '') + '</button>';
+      }).join('') + '</div>';
+    }
+    h += '<div class="add-row">' +
+      '<label class="btn-small">+ Фото для себя<input class="sr" type="file" accept="image/*" data-file="private" data-id="' + p.id + '"></label>' +
+      '<label class="btn-small">+ Фото для всех<input class="sr" type="file" accept="image/*" data-file="public" data-id="' + p.id + '"></label></div>';
+    if (state.msg && state.msg.id === p.id) h += '<p class="note" role="status">' + esc(state.msg.text) + '</p>';
+    h += '<p class="note">Загружайте только свои фото, без людей в кадре и без рекламы. Фото «для всех» появятся после проверки.</p></div>';
+    return h;
+  }
+
+  function decode(file) {
+    function legacy() {
+      return new Promise(function (res, rej) {
+        var u = URL.createObjectURL(file), im = new Image();
+        im.onload = function () { URL.revokeObjectURL(u); res(im); };
+        im.onerror = function () { rej(new Error('img')); };
+        im.src = u;
+      });
+    }
+    if (window.createImageBitmap) return createImageBitmap(file, { imageOrientation: 'from-image' }).catch(function () { return createImageBitmap(file); }).catch(legacy);
+    return legacy();
+  }
+  // уменьшаем до 1200 px и перекодируем в JPEG: заодно пропадают метаданные (геолокация)
+  function prepare(file) {
+    return decode(file).then(function (img) {
+      var k = Math.min(1, 1200 / Math.max(img.width, img.height));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      if (img.close) img.close();
+      function enc(q) { return new Promise(function (res, rej) { c.toBlob(function (b) { b ? res(b) : rej(new Error('blob')); }, 'image/jpeg', q); }); }
+      return enc(0.82).then(function (b) { return b.size <= LIMIT ? b : enc(0.65).then(function (b2) { return b2.size <= LIMIT ? b2 : enc(0.5); }); });
+    });
+  }
+
+  function sendPhoto(rec) {
+    if (rec.sending) return Promise.resolve();
+    rec.sending = true;
+    return sb('/storage/v1/object/photos/' + encPath(rec.path), { method: 'POST', body: rec.blob, headers: { 'Content-Type': 'image/jpeg', 'x-upsert': 'false' } })
+      .catch(function (e) { if (e && (e.status === 409 || /Duplicate/i.test(e.body || ''))) return; throw e; })
+      .then(function () { return jsonPost('photos', { place_id: rec.place, path: rec.path, device_id: deviceId }); })
+      .then(function () { rec.status = 'pending'; return idbPut(rec).catch(function () {}); })
+      .then(function () { rec.sending = false; say(rec.place, 'Фото отправлено на проверку. После одобрения его увидят все.'); },
+            function () { rec.sending = false; rec.status = 'queued'; say(rec.place, 'Не удалось отправить. Фото сохранено, отправим позже.'); });
+  }
+  function addPhoto(file, pid, shared) {
+    if (state.local.filter(function (l) { return l.place === pid; }).length >= 8) { say(pid, 'У одного места можно хранить до 8 своих фото. Уберите лишние.'); return; }
+    say(pid, 'Обрабатываю фото…');
+    prepare(file).then(function (blob) {
+      var rec = { id: uuid(), place: pid, blob: blob, shared: shared, status: shared ? 'queued' : 'private', path: pid + '/' + uuid() + '.jpg', t: Date.now() };
+      state.local.push(rec);
+      idbPut(rec).catch(function () { say(pid, 'Браузер не даёт сохранить фото, оно будет доступно до закрытия страницы.'); });
+      if (shared) { say(pid, 'Отправляю на проверку…'); sendPhoto(rec); }
+      else say(pid, 'Фото сохранено на этом устройстве, видно только вам.');
+    }).catch(function () { say(pid, 'Не удалось обработать это фото. Попробуйте другое.'); });
+  }
+
+  function openPhoto(pid, key) {
+    var x = photosOf(pid).filter(function (p) { return p.key === key; })[0];
+    if (!x) return;
+    state.lb = x;
+    $('lbImg').src = x.src;
+    $('lbAct').textContent = x.kind === 'remote' ? 'Пожаловаться' : 'Убрать с устройства';
+    $('lb').hidden = false;
+    $('lbClose').focus();
+  }
+  function closePhoto() { $('lb').hidden = true; $('lbImg').removeAttribute('src'); state.lb = null; }
+  function lbAction() {
+    var x = state.lb; if (!x) return;
+    closePhoto();
+    if (x.kind === 'remote') {
+      state.flags[x.key] = true; save('flags', state.flags);
+      jsonPost('photo_flags', { photo_id: x.key, device_id: deviceId }, { q: '?on_conflict=photo_id,device_id', prefer: 'resolution=ignore-duplicates' }).catch(function () {});
+      say(x.pid, 'Спасибо, мы проверим это фото. У вас оно скрыто.');
+    } else {
+      state.local = state.local.filter(function (l) { return l.id !== x.key; });
+      idbDel(x.key).catch(function () {});
+      if (urls[x.key]) { URL.revokeObjectURL(urls[x.key]); delete urls[x.key]; }
+      say(x.pid, 'Фото убрано с этого устройства.');
+    }
+  }
+
+  function sendReport(id) {
+    return jsonPost('reports', { place_id: id, device_id: deviceId }, { q: '?on_conflict=place_id,device_id', prefer: 'resolution=ignore-duplicates' })
+      .then(function () { state.repSent[id] = true; save('repsent', state.repSent); }, function () {});
+  }
+  function sendProp(p) {
+    if (p.sending) return Promise.resolve(false);
+    p.sending = true;
+    return jsonPost('suggestions', { kind: p.kind || null, name: p.name, station: p.station || null, why: p.why, device_id: deviceId }).then(
+      function () { p.sending = false; p.sent = true; save('props', state.props); renderProps(); return true; },
+      function () { p.sending = false; return false; });
+  }
+  function flush() {
+    state.local.filter(function (l) { return l.shared && l.status === 'queued'; }).forEach(sendPhoto);
+    state.props.filter(function (p) { return p.sent === false; }).forEach(sendProp);
+    Object.keys(state.reports).filter(function (id) { return state.reports[id] && !state.repSent[id]; }).forEach(sendReport);
+  }
+  function loadRemote() {
+    sb('/rest/v1/photos?select=id,place_id,path&status=eq.approved&order=created_at.desc&limit=1000')
+      .then(function (r) { return r.json(); })
+      .then(function (rows) {
+        var m = {};
+        rows.forEach(function (r) { (m[r.place_id] = m[r.place_id] || []).push(r); });
+        state.remote = m; refresh();
+      }).catch(function () {});
+  }
 
   function hav(a, b) {
     var t = Math.PI / 180, dLat = (b.lat - a.lat) * t, dLon = (b.lon - a.lon) * t;
@@ -375,23 +617,29 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function tagsHTML(p) { return (p.note ? '<span class="tag tag-note">' + esc(p.note) + '</span>' : '') + p.moods.map(function (m) { return '<span class="tag">' + MOOD_LABEL[m] + '</span>'; }).join(''); }
 
   function hue(id) { var h = 0; for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return h % 4; }
+  var CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   function cardHTML(p, m, mode) {
     var shown = m > 99 ? '99+' : m;
     var rep = !!state.reports[p.id];
     var on = !!state.favs[p.id];
-    var html = '<li class="card' + (rep ? ' reported' : '') + '"><div class="media p' + hue(p.id) + '">' +
+    var open = state.open === p.id;
+    var ph = photosOf(p.id);
+    var cover = ph.length ? ph[0].src : 'photos/' + encodeURIComponent(p.id) + '.jpg';
+    var html = '<li class="card' + (rep ? ' reported' : '') + (open ? ' open' : '') + '"><div class="media p' + hue(p.id) + '" data-act="toggle" data-id="' + p.id + '">' +
       '<span class="ph-letter" aria-hidden="true">' + esc(p.name.charAt(0)) + '</span>' +
-      '<img src="photos/' + encodeURIComponent(p.id) + '.jpg" alt="" loading="lazy" decoding="async">' +
+      '<img src="' + esc(cover) + '" alt="" loading="lazy" decoding="async">' +
       '<span class="time-pill">' + shown + ' <span>мин пешком</span></span>';
     if (mode === 'near') {
       html += '<button class="heart" data-act="fav" data-id="' + p.id + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Убрать из сохранённого: ' : 'Сохранить: ') + esc(p.name) + '">' + HEART + '</button>';
     }
-    html += '</div><div class="body"><h3>' + esc(p.name) + '</h3>' +
+    html += '</div><div class="body"><div class="title-row"><h3>' + esc(p.name) + '</h3>' +
+      '<button class="chev" type="button" data-act="toggle" data-id="' + p.id + '" aria-expanded="' + open + '" aria-controls="more-' + mode + '-' + p.id + '" aria-label="' + (open ? 'Свернуть: ' : 'Подробнее: ') + esc(p.name) + '">' + CHEV + '</button></div>' +
       (p.addr ? '<p class="addr">' + esc(p.addr) + '</p>' : '') +
       '<p class="desc">' + esc(p.desc) + '</p><div class="meta">' + tagsHTML(p) + '</div>' +
       '<div class="links"><a class="maplink" href="' + mapUrl(p) + '" target="_blank" rel="noopener">На карте ↗</a>' +
       '<button class="link-btn" data-act="report" data-id="' + p.id + '">' + (rep ? 'Отменить отметку' : (p.door ? 'Дверь изменилась?' : 'Закрылось?')) + '</button></div>' +
-      (rep ? '<p class="note" style="margin-top:6px">Отметили, проверим это место.</p>' : '');
+      (rep ? '<p class="note" style="margin-top:6px">Отметили, проверим это место.</p>' : '') +
+      (open ? moreHTML(p, mode) : '');
     if (mode !== 'near') {
       var st = state.favs[p.id];
       html += '<div class="actions">' +
@@ -474,7 +722,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function renderProps() {
     $('propsHead').hidden = !state.props.length;
     $('propsList').innerHTML = state.props.map(function (p, i) {
-      return '<li class="prop"><div class="top"><strong>' + esc(p.name) + '</strong><button class="btn-small" data-act="delProp" data-i="' + i + '">Удалить</button></div><span class="note">' + (p.kind ? esc(p.kind) + ' · ' : '') + esc(p.station) + '</span><span>' + esc(p.why) + '</span></li>';
+      return '<li class="prop"><div class="top"><strong>' + esc(p.name) + '</strong><button class="btn-small" data-act="delProp" data-i="' + i + '">Удалить</button></div><span class="note">' + (p.kind ? esc(p.kind) + ' · ' : '') + esc(p.station) + (p.sent === true ? ' · отправлено' : (p.sent === false ? ' · ждёт отправки' : '')) + '</span><span>' + esc(p.why) + '</span></li>';
     }).join('');
   }
 
@@ -488,9 +736,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
   function renderAll() { renderTabs(); renderStation(); renderMoods(); renderNear(); renderSaved(); renderProps(); }
 
   document.addEventListener('click', function (e) {
+    if (e.target === $('lb')) { closePhoto(); return; }
     var b = e.target.closest('[data-act]');
     if (!b) return;
     var act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
+    if (act === 'toggle') { state.open = state.open === id ? null : id; state.msg = null; refresh(); return; }
+    if (act === 'photo') { openPhoto(id, b.getAttribute('data-key')); return; }
+    if (act === 'lbClose') { closePhoto(); return; }
+    if (act === 'lbAct') { lbAction(); return; }
     if (act === 'tab') { state.tab = b.getAttribute('data-tab'); renderTabs(); return; }
     if (act === 'stToggle') {
       var open = $('stPanel').hidden;
@@ -512,7 +765,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     if (act === 'status') { state.favs[id] = b.getAttribute('data-status'); save('favs', state.favs); renderSaved(); renderNear(); return; }
     if (act === 'unfav') { delete state.favs[id]; save('favs', state.favs); renderSaved(); renderNear(); return; }
     if (act === 'report') {
-      if (state.reports[id]) delete state.reports[id]; else state.reports[id] = true;
+      if (state.reports[id]) delete state.reports[id]; else { state.reports[id] = true; if (!state.repSent[id]) sendReport(id); }
       save('reports', state.reports); renderNear(); renderSaved(); return;
     }
     if (act === 'savedTab') { state.savedTab = b.getAttribute('data-st'); renderSaved(); return; }
@@ -527,11 +780,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
     e.preventDefault();
     var name = $('p-name').value.trim(), why = $('p-why').value.trim();
     if (!name || !why) { $('propStatus').textContent = 'Заполните название и пару слов о том, чем место красиво.'; return; }
-    state.props.unshift({ kind: $('p-kind').value, name: name, station: $('p-station').value, why: why });
+    var prop = { kind: $('p-kind').value, name: name, station: $('p-station').value, why: why, sent: false };
+    state.props.unshift(prop);
     save('props', state.props);
     $('p-name').value = ''; $('p-why').value = '';
-    $('propStatus').textContent = 'Заявка сохранена на этом устройстве.';
+    $('propStatus').textContent = 'Отправляю заявку…';
     renderProps();
+    sendProp(prop).then(function (ok) {
+      $('propStatus').textContent = ok ? 'Заявка отправлена на проверку. Спасибо!' : 'Не удалось отправить. Заявка сохранена, отправим позже.';
+    });
   });
 
   document.addEventListener('error', function (e) {
@@ -539,7 +796,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
     if (t && t.tagName === 'IMG' && t.closest && t.closest('.media')) t.remove();
   }, true);
 
+  document.addEventListener('change', function (e) {
+    var t = e.target, kind = t && t.getAttribute && t.getAttribute('data-file');
+    if (!kind) return;
+    var f = t.files && t.files[0];
+    if (!f) return;
+    addPhoto(f, t.getAttribute('data-id'), kind === 'public');
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('lb').hidden) closePhoto(); });
+  window.addEventListener('online', flush);
+
   renderAll();
+  idbAll().then(function (rows) { state.local = rows || []; refresh(); flush(); }, function () { flush(); });
+  loadRemote();
 })();
 </script>
 
