@@ -7,10 +7,7 @@
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>viaplaces</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Oranienbaum&display=swap" rel="stylesheet">
-<style>
+<style>@font-face{font-family:"Onest";font-weight:400;font-display:swap;src:url(fonts/onest-400.woff2) format("woff2")}@font-face{font-family:"Onest";font-weight:500;font-display:swap;src:url(fonts/onest-500.woff2) format("woff2")}@font-face{font-family:"Onest";font-weight:600;font-display:swap;src:url(fonts/onest-600.woff2) format("woff2")}@font-face{font-family:"Oranienbaum";font-weight:400;font-display:swap;src:url(fonts/oranienbaum-400.woff2) format("woff2")}
 /* Layout: одна колонка до 600px. Сверху станция, под ней настроение, ниже места по времени пешком.
    Палитра: питерский туман, гранит и пыльная роза фасадов. */
 :root {
@@ -178,6 +175,17 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
 .lb .btn-small { color: #fff; border-color: rgba(255, 255, 255, .45); padding: 10px 16px; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.foot { text-align: center; font-size: 12px; color: var(--muted); padding: 8px 0 24px; display: grid; gap: 4px; }
+.foot a, .foot button { color: var(--muted); text-decoration: underline; background: none; border: 0; font: inherit; padding: 0; cursor: pointer; }
+.cm { position: fixed; inset: 0; z-index: 60; background: rgba(10,12,18,.55); display: grid; place-items: center; padding: 16px; }
+.cm[hidden] { display: none; }
+.cm-box { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 18px; padding: 18px; max-width: 420px; width: 100%; display: grid; gap: 12px; font-size: 14px; }
+.cm-box h3 { font-family: var(--display); font-weight: 400; font-size: 22px; }
+.cm-box a { color: var(--accent); }
+.cm-check { display: flex; gap: 10px; align-items: flex-start; }
+.cm-check input { width: 20px; height: 20px; flex: none; margin-top: 2px; accent-color: var(--accent); }
+.cm-row { display: flex; gap: 8px; justify-content: flex-end; }
+.btn-main[disabled] { opacity: .45; }
 </style>
 
 </head>
@@ -254,6 +262,24 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     <p class="h-sub" id="propsHead" hidden>Ваши заявки</p>
     <ul class="props" id="propsList"></ul>
   </section>
+</div>
+
+<div class="foot">
+  <div>Оператор: ИП Ли Андрей Хенчерович, ИНН 470614850478, ОГРНИП 326470400114399</div>
+  <div><a href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a> · <a href="consent.html" target="_blank" rel="noopener">Согласие на обработку данных</a></div>
+  <div><button type="button" data-act="consentInfo" id="consentBtn">Мои данные и согласие</button></div>
+</div>
+
+<div class="cm" id="cm" role="dialog" aria-modal="true" aria-labelledby="cmT" hidden>
+  <div class="cm-box">
+    <h3 id="cmT">Согласие на обработку данных</h3>
+    <p id="cmText">Чтобы отправить это на сервер, нужно ваше согласие. Мы получим анонимный номер вашего устройства и то, что вы отправляете (фото, текст заявки, отметку «закрыто»). Имени, телефона и почты мы не просим.</p>
+    <label class="cm-check"><input type="checkbox" id="cmChk"><span>Я прочитал(а) <a href="privacy.html" target="_blank" rel="noopener">Политику конфиденциальности</a> и даю <a href="consent.html" target="_blank" rel="noopener">согласие на обработку данных</a>.</span></label>
+    <div class="cm-row">
+      <button class="btn-small" type="button" id="cmNo">Не сейчас</button>
+      <button class="btn-main" type="button" id="cmYes" disabled>Согласен(на)</button>
+    </div>
+  </div>
 </div>
 
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Фото" hidden>
@@ -407,34 +433,69 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-  // ---------- сервер (Supabase) ----------
-  var SB = { url: 'https://pgnxamklwakczuwlgqup.supabase.co', key: 'sb_publishable_S_lBgCODokV90yxdTkoW4Q_onyUFNRB' };
-  var LIMIT = 580 * 1024;
-  function uuid() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); }
+  // ---------- сервер (Yandex Cloud, Cloud Functions) ----------
+  // Сюда вставляется адрес функции, например 'https://functions.yandexcloud.net/d4e...?integration=raw'.
+  // Пока адрес пустой, сайт работает только локально.
+  var API = { base: '' };
+  var LIMIT = 580 * 1024; // максимальный размер фото после сжатия
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+  }
   var deviceId = load('device', null);
   if (!deviceId) { deviceId = uuid(); save('device', deviceId); }
 
-  function sb(path, opts) {
-    opts = opts || {};
-    var ctl = window.AbortController ? new AbortController() : null;
-    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 20000) : null;
-    var headers = { apikey: SB.key };
-    Object.keys(opts.headers || {}).forEach(function (k) { headers[k] = opts.headers[k]; });
-    return fetch(SB.url + path, { method: opts.method || 'GET', headers: headers, body: opts.body, signal: ctl ? ctl.signal : undefined })
-      .then(function (r) {
-        if (timer) clearTimeout(timer);
-        if (r.ok) return r;
-        return r.text().then(function (t) { var e = new Error('HTTP ' + r.status); e.status = r.status; e.body = t; throw e; });
-      }, function (e) { if (timer) clearTimeout(timer); throw e; });
+  // согласие на обработку данных: без него на сервер ничего не отправляется
+  var consent = load('consent', null);
+  function hasConsent() { return !!(consent && consent.t); }
+  var cmWait = null;
+  function askConsent(onYes, onNo, text) {
+    if (hasConsent()) { onYes(); return; }
+    cmWait = { yes: onYes, no: onNo };
+    $('cmChk').checked = false; $('cmYes').disabled = true;
+    $('cmText').textContent = text || 'Чтобы отправить это на сервер, нужно ваше согласие. Мы получим анонимный номер вашего устройства и то, что вы отправляете (фото, текст заявки, отметку «закрыто»). Имени, телефона и почты мы не просим.';
+    $('cm').hidden = false; $('cmChk').focus();
   }
-  function jsonPost(table, row, extra) {
-    extra = extra || {};
-    return sb('/rest/v1/' + table + (extra.q || ''), {
-      method: 'POST', body: JSON.stringify(row),
-      headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' + (extra.prefer ? ',' + extra.prefer : '') }
+  function closeConsent(ok) {
+    $('cm').hidden = true;
+    var w = cmWait; cmWait = null;
+    if (ok) { consent = { t: new Date().toISOString(), v: 1 }; save('consent', consent); }
+    if (w) { if (ok) w.yes(); else if (w.no) w.no(); }
+  }
+  function withdrawConsent() {
+    consent = null; save('consent', null);
+    state.local.forEach(function (l) { if (l.status === 'queued') l.status = 'private'; });
+  }
+
+  function apiUrl(route, params) {
+    var u = API.base + (API.base.indexOf('?') === -1 ? '?' : '&') + 'r=' + route;
+    Object.keys(params || {}).forEach(function (k) { u += '&' + k + '=' + encodeURIComponent(params[k]); });
+    return u;
+  }
+  // POST отправляется как text/plain: так браузер не делает предварительный запрос CORS
+  function apiFetch(url, body) {
+    if (!API.base) return Promise.reject(new Error('no api'));
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 25000) : null;
+    var opts = { signal: ctl ? ctl.signal : undefined };
+    if (body !== undefined) { opts.method = 'POST'; opts.body = body; }
+    return fetch(url, opts).then(function (r) {
+      if (timer) clearTimeout(timer);
+      if (r.ok) return r;
+      var e = new Error('HTTP ' + r.status); e.status = r.status; throw e;
+    }, function (e) { if (timer) clearTimeout(timer); throw e; });
+  }
+  function apiPost(route, obj, params) {
+    if (!hasConsent()) { var e = new Error('no consent'); e.noConsent = true; return Promise.reject(e); }
+    return apiFetch(apiUrl(route, params), typeof obj === 'string' ? obj : JSON.stringify(obj)); }
+  function blobToB64(blob) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onload = function () { res(String(fr.result).split(',')[1] || ''); };
+      fr.onerror = function () { rej(fr.error); };
+      fr.readAsDataURL(blob);
     });
   }
-  function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }
 
   // ---------- личные фото в браузере (IndexedDB) ----------
   var idb = null, urls = {};
@@ -469,18 +530,18 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
   function photosOf(pid) {
     var out = [], approved = {};
     (state.remote[pid] || []).forEach(function (r) {
-      approved[r.path] = 1;
+      approved[r.id] = 1;
       if (state.flags[r.id]) return;
-      out.push({ key: r.id, src: SB.url + '/storage/v1/object/public/photos/' + encPath(r.path), kind: 'remote', pid: pid });
+      out.push({ key: r.id, src: r.url, kind: 'remote', pid: pid });
     });
-    state.local.filter(function (l) { return l.place === pid && !approved[l.path]; })
+    state.local.filter(function (l) { return l.place === pid && !approved[l.id]; })
       .sort(function (a, b) { return b.t - a.t; })
       .forEach(function (l) { out.push({ key: l.id, src: blobUrl(l), kind: 'local', rec: l, pid: pid }); });
     return out;
   }
   function badgeOf(x) {
     if (x.kind === 'remote') return '';
-    return x.rec.status === 'private' ? 'только вам' : (x.rec.status === 'pending' ? 'на проверке' : 'не отправлено');
+    var s = x.rec.status; return s === 'private' ? 'только вам' : (s === 'pending' ? 'на проверке' : (s === 'refused' ? 'не принято' : 'не отправлено'));
   }
   function recTitle(p) { return p.door ? 'Как снимать' : (p.moods.indexOf('sit') !== -1 ? 'Что попробовать' : 'Что посмотреть'); }
 
@@ -533,18 +594,22 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
   function sendPhoto(rec) {
     if (rec.sending) return Promise.resolve();
     rec.sending = true;
-    return sb('/storage/v1/object/photos/' + encPath(rec.path), { method: 'POST', body: rec.blob, headers: { 'Content-Type': 'image/jpeg', 'x-upsert': 'false' } })
-      .catch(function (e) { if (e && (e.status === 409 || /Duplicate/i.test(e.body || ''))) return; throw e; })
-      .then(function () { return jsonPost('photos', { place_id: rec.place, path: rec.path, device_id: deviceId }); })
+    return blobToB64(rec.blob)
+      .then(function (b64) { return apiPost('upload', b64, { place_id: rec.place, device_id: deviceId, id: rec.id }); })
       .then(function () { rec.status = 'pending'; return idbPut(rec).catch(function () {}); })
       .then(function () { rec.sending = false; say(rec.place, 'Фото отправлено на проверку. После одобрения его увидят все.'); },
-            function () { rec.sending = false; rec.status = 'queued'; say(rec.place, 'Не удалось отправить. Фото сохранено, отправим позже.'); });
+            function (e) {
+              rec.sending = false;
+              if (e && e.status === 429) { rec.status = 'queued'; say(rec.place, 'На сегодня лимит загрузок исчерпан. Фото сохранено, отправим позже.'); return; }
+              if (e && e.status >= 400 && e.status < 500) { rec.status = 'refused'; idbPut(rec).catch(function () {}); say(rec.place, 'Сервер не принял это фото. Оно осталось только у вас.'); return; }
+              rec.status = 'queued'; say(rec.place, 'Не удалось отправить. Фото сохранено, отправим позже.');
+            });
   }
   function addPhoto(file, pid, shared) {
     if (state.local.filter(function (l) { return l.place === pid; }).length >= 8) { say(pid, 'У одного места можно хранить до 8 своих фото. Уберите лишние.'); return; }
     say(pid, 'Обрабатываю фото…');
     prepare(file).then(function (blob) {
-      var rec = { id: uuid(), place: pid, blob: blob, shared: shared, status: shared ? 'queued' : 'private', path: pid + '/' + uuid() + '.jpg', t: Date.now() };
+      var rec = { id: uuid(), place: pid, blob: blob, shared: shared, status: shared ? 'queued' : 'private', t: Date.now() };
       state.local.push(rec);
       idbPut(rec).catch(function () { say(pid, 'Браузер не даёт сохранить фото, оно будет доступно до закрытия страницы.'); });
       if (shared) { say(pid, 'Отправляю на проверку…'); sendPhoto(rec); }
@@ -567,7 +632,7 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     closePhoto();
     if (x.kind === 'remote') {
       state.flags[x.key] = true; save('flags', state.flags);
-      jsonPost('photo_flags', { photo_id: x.key, device_id: deviceId }, { q: '?on_conflict=photo_id,device_id', prefer: 'resolution=ignore-duplicates' }).catch(function () {});
+      if (hasConsent()) apiPost('flags', { photo_id: x.key, device_id: deviceId }).catch(function () {});
       say(x.pid, 'Спасибо, мы проверим это фото. У вас оно скрыто.');
     } else {
       state.local = state.local.filter(function (l) { return l.id !== x.key; });
@@ -578,23 +643,41 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
   }
 
   function sendReport(id) {
-    return jsonPost('reports', { place_id: id, device_id: deviceId }, { q: '?on_conflict=place_id,device_id', prefer: 'resolution=ignore-duplicates' })
+    return apiPost('reports', { place_id: id, device_id: deviceId })
       .then(function () { state.repSent[id] = true; save('repsent', state.repSent); }, function () {});
   }
   function sendProp(p) {
     if (p.sending) return Promise.resolve(false);
     p.sending = true;
-    return jsonPost('suggestions', { kind: p.kind || null, name: p.name, station: p.station || null, why: p.why, device_id: deviceId }).then(
+    return apiPost('suggestions', { kind: p.kind || '', name: p.name, station: p.station || '', why: p.why, device_id: deviceId }).then(
       function () { p.sending = false; p.sent = true; save('props', state.props); renderProps(); return true; },
       function () { p.sending = false; return false; });
   }
   function flush() {
+    if (!hasConsent()) return;
     state.local.filter(function (l) { return l.shared && l.status === 'queued'; }).forEach(sendPhoto);
     state.props.filter(function (p) { return p.sent === false; }).forEach(sendProp);
     Object.keys(state.reports).filter(function (id) { return state.reports[id] && !state.repSent[id]; }).forEach(sendReport);
   }
+  // места, добавленные через бота: хранятся в таблице places
+  function addExtra(rows) {
+    var added = false;
+    (rows || []).forEach(function (r) {
+      if (!r || !r.id || byPlace(r.id) || !isFinite(r.lat) || !isFinite(r.lon)) return;
+      PLACES.push({ id: r.id, name: r.name, addr: r.addr || '', desc: r.descr || '', moods: r.moods && r.moods.length ? r.moods : ['walk'], lat: r.lat, lon: r.lon, note: r.note || '', door: !!r.door, q: r.q || '', ex: true });
+      if (r.recs && r.recs.length && !RECS[r.id]) RECS[r.id] = r.recs;
+      added = true;
+    });
+    return added;
+  }
+  function loadPlaces() {
+    apiFetch(apiUrl('places'))
+      .then(function (r) { return r.json(); })
+      .then(function (rows) { save('extra', rows); if (addExtra(rows)) renderAll(); })
+      .catch(function () {});
+  }
   function loadRemote() {
-    sb('/rest/v1/photos?select=id,place_id,path&status=eq.approved&order=created_at.desc&limit=1000')
+    apiFetch(apiUrl('photos'))
       .then(function (r) { return r.json(); })
       .then(function (rows) {
         var m = {};
@@ -610,7 +693,10 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
   }
   // 5 км/ч и запас 25% на повороты улиц
   function mins(st, pl) { return Math.max(1, Math.round(hav(st, pl) * 15)); }
-  function mapUrl(p) { return 'https://yandex.ru/maps/?text=' + encodeURIComponent(p.q || (p.name + ', Санкт-Петербург')); }
+  function mapUrl(p) {
+    if (p.ex && p.lat && p.lon) return 'https://yandex.ru/maps/?ll=' + p.lon + ',' + p.lat + '&z=17&pt=' + p.lon + ',' + p.lat + ',pm2rdm';
+    return 'https://yandex.ru/maps/?text=' + encodeURIComponent(p.q || (p.name + ', Санкт-Петербург'));
+  }
 
   var HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.500c-.2 0-7.800-4.700-9.300-9.800C1.700 7.300 3.900 4.500 7 4.500c2 0 3.700 1 5 2.900 1.300-1.900 3-2.900 5-2.900 3.100 0 5.300 2.800 4.300 6.200-1.500 5.100-9.100 9.800-9.300 9.800z"/></svg>';
 
@@ -765,8 +851,10 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     if (act === 'status') { state.favs[id] = b.getAttribute('data-status'); save('favs', state.favs); renderSaved(); renderNear(); return; }
     if (act === 'unfav') { delete state.favs[id]; save('favs', state.favs); renderSaved(); renderNear(); return; }
     if (act === 'report') {
-      if (state.reports[id]) delete state.reports[id]; else { state.reports[id] = true; if (!state.repSent[id]) sendReport(id); }
-      save('reports', state.reports); renderNear(); renderSaved(); return;
+      if (state.reports[id]) { delete state.reports[id]; save('reports', state.reports); renderNear(); renderSaved(); return; }
+      state.reports[id] = true; save('reports', state.reports); renderNear(); renderSaved();
+      if (!state.repSent[id]) askConsent(function () { sendReport(id); }, null, 'Отметка «закрыто» уходит на сервер вместе с анонимным номером устройства. Для этого нужно согласие. Без него отметка останется только у вас.');
+      return;
     }
     if (act === 'savedTab') { state.savedTab = b.getAttribute('data-st'); renderSaved(); return; }
     if (act === 'delProp') { state.props.splice(+b.getAttribute('data-i'), 1); save('props', state.props); renderProps(); return; }
@@ -781,14 +869,16 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     var name = $('p-name').value.trim(), why = $('p-why').value.trim();
     if (!name || !why) { $('propStatus').textContent = 'Заполните название и пару слов о том, чем место красиво.'; return; }
     var prop = { kind: $('p-kind').value, name: name, station: $('p-station').value, why: why, sent: false };
-    state.props.unshift(prop);
-    save('props', state.props);
-    $('p-name').value = ''; $('p-why').value = '';
-    $('propStatus').textContent = 'Отправляю заявку…';
-    renderProps();
-    sendProp(prop).then(function (ok) {
-      $('propStatus').textContent = ok ? 'Заявка отправлена на проверку. Спасибо!' : 'Не удалось отправить. Заявка сохранена, отправим позже.';
-    });
+    askConsent(function () {
+      state.props.unshift(prop);
+      save('props', state.props);
+      $('p-name').value = ''; $('p-why').value = '';
+      $('propStatus').textContent = 'Отправляю заявку…';
+      renderProps();
+      sendProp(prop).then(function (ok) {
+        $('propStatus').textContent = ok ? 'Заявка отправлена на проверку. Спасибо!' : 'Не удалось отправить. Заявка сохранена, отправим позже.';
+      });
+    }, function () { $('propStatus').textContent = 'Без согласия заявку отправить нельзя. Текст остался в форме.'; });
   });
 
   document.addEventListener('error', function (e) {
@@ -801,12 +891,31 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     if (!kind) return;
     var f = t.files && t.files[0];
     if (!f) return;
-    addPhoto(f, t.getAttribute('data-id'), kind === 'public');
+    var pid0 = t.getAttribute('data-id'), pub = kind === 'public';
+    t.value = '';
+    if (pub && !hasConsent()) {
+      askConsent(function () { addPhoto(f, pid0, true); },
+        function () { say(pid0, 'Без согласия фото не отправляется. Его можно сохранить только у себя.'); });
+      return;
+    }
+    addPhoto(f, pid0, pub);
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('lb').hidden) closePhoto(); });
   window.addEventListener('online', flush);
+  $('cmChk').addEventListener('change', function () { $('cmYes').disabled = !$('cmChk').checked; });
+  $('cmYes').addEventListener('click', function () { if ($('cmChk').checked) closeConsent(true); });
+  $('cmNo').addEventListener('click', function () { closeConsent(false); });
+  $('consentBtn').addEventListener('click', function () {
+    var t = hasConsent()
+      ? 'Согласие дано ' + new Date(consent.t).toLocaleDateString('ru-RU') + '. Номер вашего устройства: ' + deviceId + '. Чтобы отозвать согласие, нажмите «Отозвать». Чтобы удалить уже отправленные данные, напишите оператору (контакты в Политике) и укажите этот номер.'
+      : 'Согласие не дано, на сервер ничего не отправляется. Номер вашего устройства: ' + deviceId + '.';
+    if (hasConsent()) { if (window.confirm(t + '\n\nОтозвать согласие?')) withdrawConsent(); }
+    else window.alert(t);
+  });
 
+  addExtra(load('extra', []));
   renderAll();
+  loadPlaces();
   idbAll().then(function (rows) { state.local = rows || []; refresh(); flush(); }, function () { flush(); });
   loadRemote();
 })();
