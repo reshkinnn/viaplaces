@@ -436,7 +436,7 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
   // ---------- сервер (Yandex Cloud, Cloud Functions) ----------
   // Сюда вставляется адрес функции, например 'https://functions.yandexcloud.net/d4e...?integration=raw'.
   // Пока адрес пустой, сайт работает только локально.
-  var API = { base: '' };
+  var API = { base: 'https://d5deo3mjad129djdnh74.764nr5vy.apigw.yandexcloud.net/' };
   var LIMIT = 580 * 1024; // максимальный размер фото после сжатия
   function uuid() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
