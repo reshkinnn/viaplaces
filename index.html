@@ -338,9 +338,8 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     {"id": "yi", "name": "Юи", "addr": "Стрельнинская улица, 2", "desc": "Азиатская кухня и бар, есть столики на улице.", "moods": ["sit"], "lat": 59.95934, "lon": 30.29966, "q": "Юи, Стрельнинская улица, 2, Санкт-Петербург"},
     {"id": "sloy-nev", "name": "Sloy на Невском", "addr": "Невский проспект, 136", "desc": "Пекарня и кафе: вафли, десерты и завтраки.", "moods": ["sit", "warm"], "lat": 59.93, "lon": 30.36786, "q": "Sloy на Невском, Невский проспект, 136, Санкт-Петербург"},
     {"id": "sloy-may", "name": "Sloy на Маяковского", "addr": "улица Маяковского, 3", "desc": "Белый современный зал, много десертов.", "moods": ["sit", "warm"], "lat": 59.93387, "lon": 30.35479, "q": "Sloy на Маяковского, улица Маяковского, 3, Санкт-Петербург"},
-    {"id": "civil-vol", "name": "Civil Coffee Bar на Волынском", "addr": "Волынский переулок, 8", "desc": "Кофейня в скандинавском стиле с лёгкими завтраками.", "moods": ["sit", "warm"], "lat": 59.93848, "lon": 30.32169, "q": "Civil Coffee Bar на Волынском, Волынский переулок, 8, Санкт-Петербург"},
-    {"id": "civil-8sov", "name": "Civil на 8-й Советской", "addr": "8-я Советская, 4", "desc": "Просторный лофт с большим выбором завтраков.", "moods": ["sit", "warm"], "lat": 59.93795, "lon": 30.37041, "q": "Civil на 8-й Советской, 8-я Советская, 4, Санкт-Петербург"},
-    {"id": "civil-pet", "name": "Civil на Большом проспекте", "addr": "Большой проспект П.С., 71", "desc": "Кофейня, где удобно работать за ноутбуком.", "moods": ["sit", "warm"], "lat": 59.96464, "lon": 30.31046, "q": "Civil на Большом проспекте, Большой проспект П.С., 71, Санкт-Петербург"},
+    {"id": "civil-vol", "name": "Civil Coffee Bar на Волынском", "addr": "Волынский переулок, 6", "desc": "Кофейня в скандинавском стиле с лёгкими завтраками.", "moods": ["sit", "warm"], "lat": 59.93848, "lon": 30.32169, "q": "Civil Coffee Bar на Волынском, Волынский переулок, 6, Санкт-Петербург"},
+    {"id": "civil-pet", "name": "Civil на Большом проспекте", "addr": "Большой проспект П.С., 71А", "desc": "Кофейня, где удобно работать за ноутбуком.", "moods": ["sit", "warm"], "lat": 59.96464, "lon": 30.31046, "q": "Civil на Большом проспекте, Большой проспект П.С., 71А, Санкт-Петербург"},
     {"id": "frangipani", "name": "Frangipani", "addr": "Кирочная улица, 9", "desc": "Уютный ресторан на Кирочной.", "moods": ["sit"], "lat": 59.94381, "lon": 30.35414, "q": "Frangipani, Кирочная улица, 9, Санкт-Петербург"},
     {"id": "casper", "name": "Casper", "addr": "Кирочная улица, 5Г", "desc": "Бистро и бар в скандинавском духе.", "moods": ["sit", "photo"], "lat": 59.94385, "lon": 30.35237, "q": "Casper, Кирочная улица, 5Г, Санкт-Петербург"},
     {"id": "kaiju", "name": "Kaiju", "addr": "Кирочная улица, 12", "desc": "Японская кухня, ролы и рамен, в зале настольный футбол.", "moods": ["sit"], "lat": 59.9442, "lon": 30.35414, "q": "Kaiju, Кирочная улица, 12, Санкт-Петербург"},
@@ -670,20 +669,29 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     });
     return added;
   }
-  function loadPlaces() {
+  function loadPlaces(attempt) {
+    attempt = attempt || 0;
     apiFetch(apiUrl('places'))
       .then(function (r) { return r.json(); })
       .then(function (rows) { save('extra', rows); if (addExtra(rows)) renderAll(); })
-      .catch(function () {});
+      .catch(function () { if (attempt < 3) setTimeout(function () { loadPlaces(attempt + 1); }, 4000 * (attempt + 1)); });
   }
-  function loadRemote() {
+  function groupRemote(rows) {
+    var m = {};
+    rows.forEach(function (r) { (m[r.place_id] = m[r.place_id] || []).push(r); });
+    return m;
+  }
+  function loadRemote(attempt) {
+    attempt = attempt || 0;
     apiFetch(apiUrl('photos'))
       .then(function (r) { return r.json(); })
       .then(function (rows) {
-        var m = {};
-        rows.forEach(function (r) { (m[r.place_id] = m[r.place_id] || []).push(r); });
-        state.remote = m; refresh();
-      }).catch(function () {});
+        if (!Array.isArray(rows)) throw new Error('bad');
+        save('remote', rows);
+        state.remote = groupRemote(rows); refresh();
+      }).catch(function () {
+        if (attempt < 3) setTimeout(function () { loadRemote(attempt + 1); }, 4000 * (attempt + 1));
+      });
   }
 
   function hav(a, b) {
@@ -913,6 +921,7 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     else window.alert(t);
   });
 
+  (function () { var c = load('remote', null); if (Array.isArray(c)) state.remote = groupRemote(c); })();
   addExtra(load('extra', []));
   renderAll();
   loadPlaces();
