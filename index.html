@@ -409,6 +409,7 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     mood: load('mood', 'sit'),
     favs: load('favs', {}),
     reports: load('reports', {}),
+    maybe: {},
     props: load('props', []),
     savedTab: 'want',
     q: '',
@@ -669,8 +670,39 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
     attempt = attempt || 0;
     apiFetch(apiUrl('places'))
       .then(function (r) { return r.json(); })
-      .then(function (rows) { save('extra', rows); if (addExtra(rows)) renderAll(); })
+      .then(function (rows) { save('extra', rows); if (addExtra(rows)) { applyOverrides(load('ov', null)); renderAll(); } })
       .catch(function () { if (attempt < 3) setTimeout(function () { loadPlaces(attempt + 1); }, 4000 * (attempt + 1)); });
+  }
+  // правки мест с сервера: скрытие, новые названия/адреса/точки, «возможно закрыто»
+  var ORIG = {};
+  function applyOverrides(data) {
+    if (!data || !Array.isArray(data.ov)) return;
+    Object.keys(ORIG).forEach(function (id) {
+      var o = ORIG[id], p = byPlace(id);
+      if (!p) PLACES.push(o.obj); else { p.name = o.f.name; p.addr = o.f.addr; p.lat = o.f.lat; p.lon = o.f.lon; p.q = o.f.q; p.ex = o.f.ex; }
+    });
+    data.ov.forEach(function (o) {
+      var p = byPlace(o.id);
+      if (!p) return;
+      if (!ORIG[o.id]) ORIG[o.id] = { obj: p, f: { name: p.name, addr: p.addr, lat: p.lat, lon: p.lon, q: p.q, ex: p.ex } };
+      if (o.hidden) { PLACES.splice(PLACES.indexOf(p), 1); return; }
+      if (o.name) p.name = o.name;
+      if (typeof o.addr === 'string') p.addr = o.addr;
+      if (isFinite(o.lat) && isFinite(o.lon)) { p.lat = o.lat; p.lon = o.lon; p.ex = true; }
+      if (o.q) p.q = o.q;
+    });
+    state.maybe = {};
+    (data.maybe || []).forEach(function (id) { state.maybe[id] = 1; });
+  }
+  function loadOverrides(attempt) {
+    attempt = attempt || 0;
+    apiFetch(apiUrl('overrides'))
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.ov)) throw new Error('bad');
+        save('ov', data); applyOverrides(data); renderAll();
+      })
+      .catch(function () { if (attempt < 3) setTimeout(function () { loadOverrides(attempt + 1); }, 4000 * (attempt + 1)); });
   }
   function groupRemote(rows) {
     var m = {};
@@ -728,6 +760,7 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
       '<p class="desc">' + esc(p.desc) + '</p><div class="meta">' + tagsHTML(p) + '</div>' +
       '<div class="links"><a class="maplink" href="' + mapUrl(p) + '" target="_blank" rel="noopener">На карте ↗</a>' +
       '<button class="link-btn" data-act="report" data-id="' + p.id + '">' + (rep ? 'Отменить отметку' : (p.door ? 'Дверь изменилась?' : 'Закрылось?')) + '</button></div>' +
+      (state.maybe[p.id] ? '<p class="note" style="margin-top:6px">Возможно, ' + (p.door ? 'дверь изменилась' : 'место закрыто') + ': нам об этом сообщили, проверяем.</p>' : '') +
       (rep ? '<p class="note" style="margin-top:6px">Отметили, проверим это место.</p>' : '') +
       (open ? moreHTML(p, mode) : '');
     if (mode !== 'near') {
@@ -919,8 +952,10 @@ label.btn-small:focus-within { outline: 2px solid var(--accent); outline-offset:
 
   (function () { var c = load('remote', null); if (Array.isArray(c)) state.remote = groupRemote(c); })();
   addExtra(load('extra', []));
+  applyOverrides(load('ov', null));
   renderAll();
   loadPlaces();
+  loadOverrides();
   idbAll().then(function (rows) { state.local = rows || []; refresh(); flush(); }, function () { flush(); });
   loadRemote();
 })();
